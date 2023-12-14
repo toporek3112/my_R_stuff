@@ -1,0 +1,221 @@
+---
+title: "R Introduction"
+output:
+  pdf_document: default
+  html_notebook: default
+---
+
+```{r setup, include = FALSE}
+Sys.setlocale("LC_MESSAGES", "en_US.utf8")
+```
+
+# Help commands
+
+Call help page for functions, data sets etc. using `help()` or `?` as shortcut:
+
+```{r}
+help(matrix)
+?matrix
+```
+
+If the exact name of the, e.g., function is not known, a help search can be performed:
+
+```{r}
+help(Matrix)
+help.search("Matrix")
+??Matrix
+```
+
+Functions that are not named (e.g., one of the arithmetic operators below) have to be quoted in order to invoke the help function:
+
+```{r}
+?"+"
+```
+
+Use the hash sign for comments:
+
+```{r, error = TRUE}
+?+ # error! Use quotation marks!
+```
+
+Everything right of the hash sign is ignored when executing the code.
+
+# Basic arithmetics
+
+```{r}
+3 + 3      # addition; code works regardless of the spaces, but it is recommended to use them
+3 - 5      # subtraction
+3 * 5      # multiplication
+3 / 5      # division
+
+3 ^ 5       # exponentiation
+sqrt(81)    # square root
+243 ^ (1/5) # a-th root
+```
+
+## Order of operations:
+
+Multiplication and division first, then addition and subtraction:
+
+```{r}
+1 + 2 * 5 # 1 + 10
+1 - 2 / 5 # 1 - 0.4
+```
+
+The same principle applies to exponentiation and root extraction:
+
+```{r}
+2 * sqrt(9) # 2 * 3
+```
+
+"." is used as decimal separator:
+
+```{r, error = TRUE}
+1,5 + 1,5
+```
+
+```{r}
+1.5 + 1.5
+```
+
+R switches to scientific notation if numbers get too big/too small (according to the value of `scipen` (scientific penalty) that has been set in the global `options()`):
+
+```{r}
+1
+10
+100
+1000
+10000
+100000
+0.1
+0.01
+0.001
+0.0001
+?options
+options(scipen = 1)
+0.0001
+```
+
+We could also type:
+
+```{r}
+1e0
+1e5
+1e6
+```
+
+# Objects
+
+**Everything** in R is an object, all the data, all the functions!
+
+## Assignments
+
+```{r}
+x <- 5         # store 5 in variable (object) x (assignment)
+5 -> x         # also possible
+y <- 3         # store 3 in variable y
+z <- x + y     # sum of two variables
+z <- sum(x, y) # sum of two variables
+z
+(z <- x - y)   # result of operation is stored in z and printed
+```
+
+'=' may also be used as assignment operator, but only at the top level, not within the scope of a function; '<-' can be used anywhere -> see help
+
+```{r}
+(x <- 5)
+(x = 5)  # same result           
+?'<-'           
+sum(z = 1:10)                                  
+z               # assignment was not made since the scope was within 'sum'
+sum(z <- 1:10)                                 
+z 
+```
+
+R differentiates between upper- and lowercase letters:
+
+```{r, error = TRUE}
+Z
+```
+
+_"A syntactically valid name consists of letters, numbers and the dot or underline characters and starts with a letter or the dot not followed by a number. Names such as '.2way' are not valid, and neither are the reserved words."_ (See `?make.names`).  
+
+Apart from this, there are certain reserved words that cannot be used (see `?Reserved`). To avoid conflicts, you also shouldn't use names of functions and data sets (e.g., `sum()`). If you are not sure if the intended name has already been used, you can check if there is a help page:
+
+```{r}
+?s # no documentation found -> o.k.
+?t # function used to transpose a matrix -> not o.k.
+```
+
+# Functions
+
+R is a functional programming language, and a function call works like this: 
+
+```{r, eval = FALSE}
+function.name(argument1 = value1, argument2 = value2)
+```
+
+
+A function is called by its name, followed by brackets containing (zero, one, multiple) function arguments that can be specified. The function arguments are seperated by commas and may or may not have default values. Let us have a look at the `log()` function, used to compute logarithms of numbers:
+
+```{r}
+args(log)
+```
+
+It has two arguments, `x` and `base`, but only the latter has a default value. This means that we do have to provide a value for `x`, but not for `base` (i.e., if we do not change the base argument, the natural logarithm will be computed).
+
+```{r}
+log(x = 2) # x = 2, base = exp(1)
+log(x = 2, base = 5) # change base
+log(2, 5) # x = 2, base = 5 -> if the argument order is retained, we do not have to name the arguments
+log(5, 2) # x = 5, base = 2
+log(base = 5, x = 2) # -> if the arguments are named, it is possible to change their order
+log(b = 5, x = 2) # partial matching -> works as long as the abbreviation of a name is unequivocal
+```
+
+Since `x` has no default value, an error occurs if we do not provide a value for it:
+
+```{r, error = TRUE}
+log()
+```
+
+
+Needless to say, it is also possible to write one's own functions, although one of R's key advantages is the vast number of ready-made functions covering all types of statistical problems.
+
+## Workspace and working directory
+
+```{r, eval = FALSE}
+ls()                    # objects in the workspace
+getwd()                 # current working directory
+```
+
+Set working directory using slashes (or double backslashes on Windows), but not single backslashes:
+
+```{r, eval = FALSE}
+setwd("/home/mwurzer")  # set working directory using slashes
+setwd("C:\\mwurzer")  # ...or double backslashes on Windows, ...
+setwd("C:\mwurzer")  # but not single backslashes!
+```
+
+Remove objects from workspace:
+
+```{r, error = TRUE}
+rm(z)
+z
+```
+
+Delete all objects in the workspace:
+
+```{r}
+rm(list = ls())
+ls()
+```
+
+## Misc.
+
+Nested functions are evaluated from the inside to the outside:
+
+```{r}
+y <- 3
+(z <- log(exp(y)))                               
+```

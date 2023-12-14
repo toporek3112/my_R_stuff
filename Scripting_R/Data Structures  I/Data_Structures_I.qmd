@@ -1,0 +1,690 @@
+---
+title: "Data Structures I"
+output:
+  pdf_document: default
+  html_notebook: default
+  word_document: default
+---
+
+```{r setup, include = FALSE}
+Sys.setlocale("LC_MESSAGES", "en_US.utf8")
+```
+
+# Introduction
+
+Objects in R represent either informal data types (i.e., they do not explicitly belong to a formal class) or formal classes. In the latter case, class-specific methods can be defined.
+
+## Informal Data Types
+
+Examples of informal data types:
+
+- Vectors: Ordered set of elements of the same type (atomic)
+- Matrices: 2-dimensional array of elements of the same type (atomic)
+- Lists: ordered set of components that may belong to different classes (recursive, i.e., list components can be lists themselves)
+
+## Formal Classes
+
+Examples of formal classes:
+
+- Factor: Vector representing categorical values
+- Data Frame: 2-dimensional array that represents a data matrix (the classic form of data in statistics where the rows represent observational units and the columns represent variables that can be of different modes)
+- Objects of class `lm`: Data objects containing the results of a linear model fit
+- Objects of class `glm`: Data objects containing the results of a generalized linear model fit
+- ...
+
+## Mode and storage mode
+
+The _mode_ of objects determines which values of a data element can be stored in principle. The _storage mode_ indicates the form of internal representation of the data.  
+Examples for these concepts are presented below (focussing on vectors).
+
+# Vectors
+
+Vectors combine elements of the same mode to a sequence of finite length. Each vector element is clearly defined by an index number.
+
+## Vector creation and description
+
+We already saw in the _R Introduction_ notebook how objects can be created using an assignment operator. If we want to create an object that is an vector, we have several possibilities, including the one we used in the aforementioned document:
+
+```{r}
+x <- 5
+```
+
+Is this a vector object? Yes, because there are no scalars in the classical meaning, they are represented by vectors of length 1. Above, we generated the vector without declaration of the mode. If we want to know its mode, we type:
+
+```{r}
+mode(x)
+```
+
+R automatically assigned the mode `numeric` (it tried to "guess" the appropriate mode), but we could also use the following line of code to implicitely declare it:
+
+```{r}
+x <- numeric(1) # numeric vector of length 1
+mode(x)
+typeof(x) # storage mode
+```
+
+Internally, the vector is stored with double precision (floating-point format). If we only need integer values, we could use the following code instead:
+
+```{r}
+x <- 5L
+mode(x)
+typeof(x)
+```
+
+We can create vectors of other modes like this:
+
+```{r}
+x <- logical(1) # TRUE/FALSE vector of length 1
+mode(x)
+x <- character(1) # character/string vector of length 1
+mode(x)
+```
+
+As a third possibility, we could use the `vector` function:
+
+```{r}
+x <- vector(mode = "numeric", length = 1) # numeric vector of length 1
+```
+
+Every object contains certain meta information (apart from the already known `mode`):
+
+```{r}
+length(x) # Vector length
+is.vector(x) # TRUE
+is.vector(x, "numeric") # TRUE, since numeric
+is.vector(x, "logical") # FALSE, since numeric
+is.numeric(x) # TRUE, if x is an object of type 'vector' and mode 'numeric'
+```
+
+These characteristics are dynamic which means that they may be changed - values as well as type ("coercion") and length.  
+
+In addition, objects may have additional attributes. We can access them using `attr()` (individually) or `attributes()` (all at once):
+
+```{r}
+attr(x, "names") # x has no "names" attribute
+attributes(x) # x has no attributes at all
+```
+
+Using the `names()` function, it is possible to name the elements of a vector. By doing so, we set the "names" attribute:
+
+```{r}
+names(x) <- "a"
+x
+attr(x, "names")
+attributes(x)
+```
+
+Vectors of length > 1 are commonly created with the "combine"-function `c()`:
+
+```{r}
+y <- c(4, 67, 1)
+y
+```
+
+It is possible to use function `c()` to combine already existing vectors or append values to them:
+
+```{r}
+y <- c(y, 1)
+y
+z <- c(44, 33)
+yz <- c(y, z)
+yz
+```
+
+<!-- Function `append()` can also be used to add elements to a vector: -->
+
+<!-- ```{r} -->
+<!-- y -->
+<!-- append(y, 10) -->
+<!-- append(y, 10, after = 2) -->
+<!-- ``` -->
+
+We already got to know object modes "logical", "integer", "double", and "character". There are two other types ("raw" for hexadecimal numbers and "complex" for complex numbers) that we do not use here. These modes are hierarchichally structured like this:  
+
+"raw" < "logical" < "integer" < "double" < "complex" < "string"
+
+If we try to combine vectors of different modes, all of them will automatically be coerced to the highest level:
+
+```{r}
+c(y, TRUE, FALSE) # TRUE and FALSE are represented by 1 and 0, respectively
+c(y, pi)
+c(y, "xyz")
+```
+
+We can also directly change the mode of a vector:
+
+```{r}
+a <- c("f", "h")
+mode(z) <- mode(a)
+z
+```
+
+The same is possible for the vector length:
+
+```{r}
+length(y) <- length(z)
+y # only the first two values are retained
+```
+
+If an object is being interpretable as numbers, a conversion to type "numeric" is possible:
+
+```{r}
+as.numeric(z) # temporary coercion
+```
+
+```{r}
+z
+z <- as.numeric(z) # permanent coercion
+z
+```
+
+Otherwise, we get a warning:
+
+```{r}
+a <- as.numeric(a)
+a
+```
+
+_Warnings_ mean that the operation is performed, but the result may not be the intended one. Here, NAs were created. (Warnings contrast _errors_ that indicate that it was **not** possible to perform the operation.)
+
+```{r}
+a <- as.character(a)
+a
+```
+
+It is not possible to backtransform, the original information is lost!
+
+## Vector arithmetic
+
+It is possible to use vectors in arithmetic expressions, e.g.:
+
+```{r}
+x <- c(33, 44)
+y <- c(55, 66)
+x + y
+```
+
+We see that the addition is performed element by element, i.e., `44 + 55` and `33 + 66`, respectively. The vectors do not need to have the same length. If one of the vectors is shorter, it is _recycled_ until it matches the length of the longer vector ("recycling rule"), e.g.:
+
+```{r}
+x <- c(33, 44, 55, 66)
+x + y # 33 + 55, 44 + 66, 55 + 55, 66 + 66
+```
+
+The recycling rule is also applied if the length of the longer vector is not a multiple of the length of the shorter vector, but we get a warning message:
+
+```{r}
+x <- c(33, 44, 55)
+x + y # 33 + 55, 44 + 66, 55 + 55
+```
+
+## Sequences and replications
+
+The simplest way to generate a sequence is by usage of the colon operator `:`, e.g.:
+
+```{r}
+1:5
+5:1
+1.1:5.1
+```
+
+It can only be used for steps of `1` or `-1`. For more complex sequences, we use the `seq()`-function. We only need to set 3 of the 4 arguments defining the sequence:
+
+```{r}
+seq(from = 0, to = 1, by = 0.1)
+seq(from = 0, to = 1, length.out = 11)
+seq(to = 1, by = 0.1, length = 11)
+seq(from = 0, by = 0.1, length = 11)
+seq(0, 1, 0.1)
+```
+
+`rep()` is used to get replications of vectors:
+
+```{r}
+rep(x = 1, times = 10)
+rep(1:5, 5)
+rep(1:5, 1:5)
+rep(1:5, 5:1)
+```
+
+Vector arithmetic revisited:
+
+```{r}
+1:5 + 2 # 1 + 2, 2 + 2, 3 + 2 etc.
+1:5 * 2 # 1 * 2, 2 * 2, 3 * 2 etc.
+```
+
+Exponent has as stronger tie than the colon operator:
+
+```{r}
+1:5 ^ 2 # 1:25
+(1:5) ^ 2 # 1 ^ 2, 2 ^ 2, 3 ^ 2 etc.
+2 ^ 1:5
+(2 ^ 1):5
+2 ^ (1:5) # 2 ^ 1, 2 ^ 2, 2 ^ 3 etc.
+```
+
+`sample()` generates vectors of random numbers:
+
+```{r, error = TRUE}
+sample(0:1, 20, replace = TRUE)
+sample(0:1, 20, replace = TRUE)
+sample(0:1, 20, replace = TRUE)
+sample(0:1, 20) 
+# error, sampling without replacement is only possible two times here!   
+```
+
+The numbers are not really random (of course), but pseudo-random. If we know the starting value, the algorithm gives us the same values again:
+
+```{r}
+set.seed(1)
+sample(0:1, 20, replace = TRUE)
+set.seed(1)
+sample(0:1, 20, replace = TRUE)
+```
+
+## Set operations
+
+If we have sets of values (given as vectors), we can apply built-in set operations to find out about set unions, intersections etc.:
+
+```{r}
+(x <- 1:10)
+(y <- c(3, 2, 7, 4, 6))
+setdiff(x, y) # select elements that are part of x, but not y
+setdiff(y, x)
+union(x, y) # union of all elements in x and y (no duplicates!)
+(z <- 5:15)
+union(x, z)
+intersect(x, y) 
+# which elements are part of x and y? each element of x is compared
+setequal(x, y)  # are all elements of x and y the same?
+(a <- 5:15)
+setequal(z, a)
+(b <- 15:5)
+setequal(z, b)
+is.element(x, y) # are the single elements of x contained in y?
+x %in% y # the same
+which(x %in% y) # which elements of x are contained in y?
+```
+
+## Sorting
+
+We use `sort()` to sort a vector:
+
+```{r}
+set.seed(1)
+x <- sample(1:100, 20)
+x
+sort(x)
+sort(x, decreasing = TRUE) # sort in reverse order
+y <- sample(letters, 10) # sample 10 lower-case letters
+y
+sort(y)
+```
+
+`order()` returns an order permutation, i.e., provides information about the indices of the lowest, second-lowest, ...,  highest values in the original vector:
+
+```{r}
+set.seed(1)
+x
+order(x)
+```
+
+The lowest value (`1`) is found on position number `3` of `x`, the second-lowest (`7`) on position number 15 etc. `order()` can also be used to do multiple sorting:
+
+```{r}
+x <- c(0, 0, 1, 1)
+y <- c(1, 0, 1, 0)
+order(x, y) # (0, 0), (0, 1), (1, 0), (1, 1)
+```
+
+`rank()` gives us the ranks of the values in a vector. If there are no bindings (equal values of two or more elements), `order` and `rank` give us the same results, e.g.:
+
+```{r}
+z <- 4:1
+order(z)
+rank(z)
+```
+
+With bindings present, we get:
+
+```{r}
+x
+order(x)
+rank(x)
+```
+
+Per default, the ranks are the means of the ties (`(1 + 2) / 2` and `(3 + 4) / 2`, respectively).
+
+## Subsetting
+
+If we want to extract certain values of a vector, we use the `[` operator:
+
+```{r, error = TRUE}
+x <- c(5, 2, 7)
+x[3] # Third element of x
+x[1:2] # First and second element of x
+x[-1] # all elements of x except the first one
+x[-c(1:2)] # all elements of x except the first two
+x[-1:2] # negative index mixed with positive indices -> error!
+
+y <- 1:2 # index vector
+x[y]
+x[-y]
+y <- c(TRUE, TRUE, FALSE) # Boolean index vector
+x[y]
+x[-y] # caution!
+-y
+z <- 1:5
+z[c(TRUE, FALSE)] # recycling rule
+```
+
+Combining the `[` operator with the assigment operator `<-`, we can replace vector elements:
+
+```{r}
+x[3] <- 1000 # replacement of the third element
+x
+x[-1] <- c(1000, 2000) # replacement of two elements
+x
+x[1:3] <- c(1000, 2000) # recycling rule also applies here
+x
+```
+
+Usually, Boolean values are not directly entered, but result from the usage of logical operators (see below):
+
+```{r}
+x <- 10:1
+x == 3 # element of x equals 3 (T/F)?
+x > 3 # element of x is greater 3 (T/F)?
+x <= 3 # element of x is less or equal 3?
+x[x == 3] # return x where x == 3?
+y <- x == 3
+x[y] # the same
+x[x == 3] <- 30
+x
+x[x > 3] # only elements that show TRUE are returned
+```
+
+## Index vectors
+
+There are a number of functions that can be used to get index vectors for certain values of interest:
+
+```{r}
+which.min(x) # index of the lowest value
+which.max(x) # index of the highest value
+which(x > 3)
+x[which(x > 3)] # x where x greater 3
+x[which.min(x)] # lowest value of x
+min(x) # the same
+x[which.max(x)] # highest value of x
+max(x) # the same
+```
+
+## Logical operators
+
+Apart from the already known operators (`==`, `>` etc.), this ones are of special importance:
+
+```{r}
+x <- 1:10
+# not equal; ! indicates NOT (logical negation):
+x != 3
+# logical AND -> both conditions are TRUE (TRUE, TRUE):
+x > 3 & x < 9
+# logical OR -> at least one of the conditions is TRUE 
+# (TRUE, TRUE or TRUE, FALSE or FALSE, TRUE):
+x > 3 | x < 9 
+y <- 6:15
+# exactly one of the conditions is TRUE (TRUE, FALSE or FALSE, TRUE):
+xor(x > 4, y < 8)
+```
+
+Caution: `==` and `!=` do not allow for a finite representation of fractions, nor for rounding error. Because of that, surprising answers may occur:
+
+```{r}
+x1 <- 0.5 - 0.3
+x2 <- 0.3 - 0.1
+x1 == x2 # FALSE on most machines
+```
+
+Using `all.equal()` and/or `identical()` is almost always preferable in this case, depending on the scope of the test for equality (exact equality or near equality -> see the help pages for details). 
+
+Moreover, `==` and `!=` also shouldn't be used in `if` expressions. These ask for a single `TRUE` or `FALSE`, but the mentioned operators may either return vectors that are not of length 1 or NAs.
+
+## Misc. functions
+
+Differences between vector elements:
+
+```{r}
+x <- 1:10
+diff(x)
+```
+
+Sums and products of elements:
+
+```{r}
+sum(x)
+prod(x)
+```
+
+Cumulated sum:
+
+```{r}
+cumsum(x)
+diff(cumsum(x))
+cumsum(diff(x))
+```
+
+Rounding:
+
+```{r}
+pi
+round(pi) # zero decimal places
+round(pi, 2) # two decimal places
+x <- 11111
+round(x, -1)
+round(x, -3)
+y <- -0.99
+round(y)
+ceiling(y)
+floor(y)
+trunc(y)
+```
+
+## String operations
+
+Number of characters for each element:
+
+```{r}
+x <- c("John Doe", "Jane Doe")
+nchar(x)
+```
+
+Concatenate vectors:
+
+```{r}
+paste("My name is", x)
+age <- c(25, 30)
+y <- paste(x, "is", age, "years old.")
+y
+length(y)
+```
+
+```{r}
+z <- paste0(y, collapse = " ")
+z
+length(z)
+```
+
+Substring:
+
+```{r}
+substring(x, 1, 4) # first element, length 4
+```
+
+Abbreviation (defaults to four characters):
+
+```{r}
+abbreviate(x)
+```
+
+## Factors
+
+Factors are used to code categorical data (e.g., country of birth, place of residence, gender, educational status, grade etc.). We generate a vector of 20 pupils' grades:
+
+```{r}
+grades <- sample(1:5, 20, replace = TRUE)
+grades
+```
+
+We use `factor()` to encode this object as a categorical variable:
+
+```{r}
+str(grades)
+grades <- factor(grades)
+grades
+```
+
+We can assign labels to get a more meaningful representation:
+
+```{r}
+grades <- factor(grades, labels = c("Sehr gut", "Gut", "Befriedigend", 
+                                    "Genügend", "Nicht genügend"))
+grades
+```
+
+Internally, the levels are still coded by numbers, which allows for a more efficient way of storing character data. This also allows for a simple back-transformation to numeric values:
+
+```{r}
+str(grades)
+as.numeric(grades)
+```
+
+But be careful:
+
+```{r}
+## Numeric values are sometimes accidentally converted to factors.
+## Converting them back to numeric is trickier than you'd expect.
+f <- factor(5:10)
+f
+# not what you might expect, probably not what you want:
+as.numeric(f) 
+# what you typically meant and want:
+as.numeric(as.character(f))
+```
+
+We could also generate factors from character vectors:
+
+```{r}
+# e.g., grades of four pupils:
+grades.ch <- c("Sehr gut", "Gut", "Befriedigend", "Gut") 
+grades.ch
+str(grades.ch)
+grades <- factor(grades.ch)
+grades
+```
+
+This leads to two problems: First of all, it is neither possible to use levels that were not defined nor to combine factors:
+
+```{r, error = TRUE}
+grades[3] <- "Genügend" 
+# Problem: levels "Genügend" and "Nicht genügend" 
+# were not part of the data, and thus, are no valid entries!
+
+# grade of a fifth pupil:
+fifth <- factor("Genügend")
+# numeric representations of both vectors, but "Genügend" 
+# also got value '1' because it is the only level of factor 'fifth':
+c(grades, fifth) 
+```
+
+Better: Define all possible levels (or at least check if all of them are there when before creating the factor):
+
+```{r}
+# e.g., grades of four pupils:
+grades2 <- c("Sehr gut", "Gut", "Befriedigend", "Gut") 
+grades2 <- factor(grades2, levels = c("Sehr gut", "Gut", "Befriedigend", 
+                                      "Genügend", "Nicht genügend"))
+grades2
+```
+
+Secondly, if the order of the levels is not specified, R automatically proceeds alphabetically:
+
+```{r}
+str(grades)
+```
+
+Here, this leads to results that do not make sense: `Befriedigend` is represented by `1`, `Gut` by `2`, and `Sehr gut` by `3`, which would lead to wrong results when, e.g., computing grade averages! The `ordered()` function can be used to explicitely generate ordered factors:
+
+```{r}
+grades2 <- ordered(grades.ch, levels = c("Sehr gut", "Gut", "Befriedigend", 
+                                         "Genügend", "Nicht genügend"))
+grades2
+```
+
+Count occurences of categories:
+
+```{r}
+table(grades.ch) # character vector
+table(grades2)    # factor
+```
+
+Levels that do not occur are dropped when applying `factor()` to an object that already is a factor:
+
+```{r}
+grades3 <- factor(grades2)
+grades3
+```
+
+Command `cut()` is used to convert numeric vectors to factors by cutting. We put each of 30 individuals aged 20 to 80 into one of two age groups and let R choose the cutoff value:
+
+```{r}
+set.seed(1)
+age <- sample(20:80, 30)
+cut(age, breaks = 2)
+```
+
+If we want to determine the cutoff values manually, we have to set a vector of cutoff values (3 for 2 categories, 4 for 3 categories etc.). It is also possible to construct labels directly:
+
+```{r}
+age.cat <- cut(age, breaks = c(-Inf, 60, Inf), labels = c("young", "old"))
+age.cat
+str(age.cat)
+```
+
+## Missing values, finite, infinite and NaN numbers
+
+Let us assume that a person is asked about her monthly income and does not want to answer this question. This is a typical example of a _missing value_. There are several reasons why values are missing (unreadable, forgot about, interview partner didn't want to give an answer etc.). In either case, we must flag such values, it is not admissible to substitute them with another value (e.g., a 0). In R, `NA` is used as special symbol that indicates a missing value (similar to a `NULL` value in relational databases, i.e., with respect to basic vectors, `NA` behaves like `NULL` in other languages. `NULL` also exists in R, but will likely not be what you want.). `NA` is available for all data types.
+
+```{r, error = TRUE}
+x <- 1:10
+x[c(1, 7, 8)] <- NA # Insert missing values on positions 1, 3 and 8
+x # x with NAs
+na.omit(x) # x is returned without NAs; additionally: Position of the missings
+na.pass(x) # x is returned without changes
+na.fail(x) # error if x includes NAs (x is not returned)
+
+sum(x) # Statistical functions in R require that all values are nonmissing!
+mean(x)                           
+sum(x, na.rm = TRUE) # Remove missing values before the computation
+
+is.na(x) # logical condition for missing values in x
+any(is.na(x) == TRUE) # Any missing values in x?
+which(is.na(x) == TRUE) # Position of the missing values in x
+
+1 / 0 # returned value is infinite (Inf)
+0 / 0 # returned value in not a number (NaN)
+x <- x[1:5]
+x[2] <- 0 / 0
+x[5] <- 1 / 0
+x
+is.na(x) # no distinction between NA and NaN
+
+# to distinguish 'ordinary' NAs from missing values that result from 
+# certain calculations:
+is.nan(x)
+is.finite(x)                         
+is.infinite(x)
+```
+
+
+

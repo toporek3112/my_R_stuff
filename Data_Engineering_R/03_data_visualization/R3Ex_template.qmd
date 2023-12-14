@@ -1,0 +1,167 @@
+---
+title: "R3 Exercises: Joining Tables and Grammer of Graphics"
+author: "INSERT HERE YOUR NAME"
+date: today
+embed-resources: true
+number-sections: true
+format:
+  html:
+    toc: true
+    toc-location: right
+    code-link: true
+    code-tools: true
+    df-print: paged
+  pdf: 
+    number-sections: true
+    toc: true
+params:
+  printcode: TRUE
+  printoutput: TRUE
+urlcolor: "blue"
+---
+
+
+```{r setup, include=FALSE}
+## set global chunk options
+knitr::opts_chunk$set(
+  warning = FALSE,
+  message = FALSE,
+  echo = params$printcode,
+  eval = params$printoutput,
+  fig.align = "center",
+  out.width = "50%"
+)
+```
+
+---
+
+Packages used in this notebook:
+
+```{r}
+library(tidyverse)
+library(Lahman)
+library(nycflights13)
+```
+
+---
+
+
+# Joining baseball data
+
+Use the data from the `{Lahman}` package. [A description of the package is available at CRAN](https://cran.r-project.org/web/packages/Lahman/Lahman.pdf)
+
+## Players with 300 home-runs and 300 stolen bases (3P)
+
+Name every player in baseball history who has accumulated at least 300 home runs (HR) and at least 300 stolen bases (SB). 
+(Use the `Batting`, and `People` data from the `Lahman` package).
+
+
+```{r}
+
+```
+
+
+## Players with 50 home-runs in 3 different years (3P)
+
+Name every player in baseball history who has scored 50 home runs in at least 3 different years.
+(Use the `Batting`, and `People` data from the `Lahman` package).
+
+```{r}
+
+```
+
+## Teams with the highest number of home-runs per player (3P)
+
+Identify the names of the 5 teams in baseball history with the highest number of home runs per player.
+(Use the `Batting`, and `Teams` data from the `Lahman` package).
+
+```{r}
+
+```
+
+
+
+# Joining fligths data  
+
+Use the `{nycflights13}` package to answer the following questions. [A description of the package is available at CRAN](https://cran.r-project.org/web/packages/nycflights13/nycflights13.pdf).
+
+## How many different planes? (5P)
+
+Use the `flights` and `planes` tables (in the `{nycflights13}` package) to answer the following questions. 
+
+### Primary keys
+
+* Does `planes` table have a primary key? 
+* Can you identify a primary key in `planes` table? 
+* Show that `tailnum` is not a primary key in `flights` table. 
+* How many different planes departed from "JFK" in 2013?
+
+### Join tables the flight and planes tables.
+
+Use and compare inner/right/left/full join to combine the `flights` data with the `planes` data. 
+
+* How many of the planes in the planes table departed from "JFK" in 2013? 
+* Have planes departed from "JFK" that are not in the planes table?
+* How many of the different ***planes in the `planes` table*** flew from New York City in 2013? 
+* Which join commands yield correct/wrong results and why? 
+
+***Inner Join***
+
+```{r}
+
+```
+
+***Right Join***
+
+```{r}
+
+```
+
+***Left Join***
+
+```{r}
+
+```
+
+***Full Join***
+
+```{r}
+
+```
+
+
+
+
+
+
+## The oldest plane that departed from New York Airport (3P)
+
+What is the oldest plane (specified by the `tailnum` variable) that flew from New York City airports in 2013? Use the `flights` and `planes` tables (in the `nycflights13` package). Rename `year` in `planes` to `plane_year` to avoid collision with `year` in `flights`. 
+```{r}
+
+```
+
+
+
+\newpage
+# Grammer of Graphics
+
+## Analysis of a graph (4P)
+Analyze the following graphical data presentation by considering the following points:
+
+  a. Identify the visual cues, coordinate system, and scale(s).
+  b. How many variables are depicted in the graph? 
+  c. Explicitly link each variable to a visual cue that you listed above.
+  d. Critique this data graphic using the taxonomy described in lecture slides.
+
+![](Tax.png)
+
+\newpage
+## Improve a graphical data presentation (4P)
+Analyze the following graph by considering the following points:
+
+ a. Critically assess the designer's choices for the graphical data presentation. 
+ b. Suggest improvements for the graph.
+
+![](food.png)
+

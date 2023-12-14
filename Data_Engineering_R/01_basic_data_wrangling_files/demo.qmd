@@ -1,0 +1,77 @@
+---
+title: "Data Engineering Demo"
+subtitle: "Class 1 R coding demo"
+date: today
+author: "Andreas Reschreiter"
+format: 
+  html:
+    toc: true
+    toc-location: right
+    toc-title: "DE Content"
+    self-contained: true
+    self-contained-math: true
+  pdf: 
+    toc: true
+    toc-title: "Inhaltsverzeichnis"
+    number-sections: true
+  revealjs: 
+    output-file: R1_demo_pres.html
+    echo: fenced
+    toc: true
+    number-sections: true
+    self-contained: true
+    self-contained-math: true
+editor: source
+---
+
+## Overview
+
+* Course outline, homework, Moodle, Quarto
+* Reticulate package
+
+## Library
+
+```{r warning=FALSE, message=FALSE}
+library(tidyverse)
+library(reticulate)
+```
+
+## Python resources
+```{r}
+reticulate::py_discover_config()
+```
+## Reticulate package
+
+* Use Python code in R and vice versa
+
+```{r}
+reticulate::conda_list()
+reticulate::virtualenv_list()
+reticulate::use_condaenv(condaenv = "base")
+```
+
+
+## Use python chunk
+
+```{python}
+import pandas as pd
+```
+
+## Use R data in python and vice versa
+
+```{r}
+df <- iris
+```
+
+```{python}
+iris_py = r.df.head(2) 
+```
+
+```{r}
+py$iris_py
+```
+
+## Rescource
+
+[Posit Blog
+Reticulate 1.31 ](https://posit.co/blog/reticulate-1-31/)

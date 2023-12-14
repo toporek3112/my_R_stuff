@@ -1,0 +1,278 @@
+---
+title: "R3 Exercises: Joining Tables and Grammer of Graphics"
+author: "INSERT HERE YOUR NAME"
+date: today
+embed-resources: true
+number-sections: true
+format:
+  html:
+    toc: true
+    toc-location: right
+    code-link: true
+    code-tools: true
+    df-print: paged
+  pdf: 
+    number-sections: true
+    toc: true
+params:
+  printcode: TRUE
+  printoutput: TRUE
+urlcolor: "blue"
+---
+
+
+```{r setup, include=FALSE}
+## set global chunk options
+knitr::opts_chunk$set(
+  warning = FALSE,
+  message = FALSE,
+  echo = params$printcode,
+  eval = params$printoutput,
+  fig.align = "center",
+  out.width = "50%"
+)
+```
+
+---
+
+Packages used in this notebook:
+
+```{r}
+library(tidyverse)
+library(Lahman)
+library(nycflights13)
+```
+
+---
+
+
+# Joining baseball data
+
+Use the data from the `{Lahman}` package. [A description of the package is available at CRAN](https://cran.r-project.org/web/packages/Lahman/Lahman.pdf)
+
+## Players with 300 home-runs and 300 stolen bases (3P)
+
+Name every player in baseball history who has accumulated at least 300 home runs (HR) and at least 300 stolen bases (SB). 
+(Use the `Batting`, and `People` data from the `Lahman` package).
+
+
+```{r}
+Batting %>%
+  group_by(playerID) %>%
+  summarise(
+            TotalHR = sum(HR, na.rm = TRUE), 
+            TotalSB = sum(SB, na.rm = TRUE)
+            ) %>% 
+  filter(TotalHR >= 300 & TotalSB >= 300) %>% 
+  left_join(People, by="playerID") %>% 
+  select(nameGiven, TotalHR, TotalSB)
+```
+
+
+## Players with 50 home-runs in 3 different years (3P)
+
+Name every player in baseball history who has scored 50 home runs in at least 3 different years.
+(Use the `Batting`, and `People` data from the `Lahman` package).
+
+```{r}
+Batting %>% 
+  group_by(playerID, yearID) %>% 
+  summarise(
+            HR = sum(HR, na.rm = TRUE)
+            ) %>% 
+  filter(HR > 50) %>% 
+  group_by(playerID) %>% 
+  summarise(
+            times = n(),
+            game_year = yearID,
+            home_runs = HR
+           ) %>% 
+  filter(times >= 3) %>% 
+  left_join(People, by="playerID") %>% 
+  select(nameGiven, times, game_year, home_runs)
+```
+
+## Teams with the highest number of home-runs per player (3P)
+
+Identify the names of the 5 teams in baseball history with the highest number of home runs per player.
+(Use the `Batting`, and `Teams` data from the `Lahman` package).
+
+```{r}
+Batting %>%
+  group_by(teamID, yearID) %>%
+  summarise(
+            totalHR = sum(HR, na.rm = TRUE),
+            players = n_distinct(playerID)
+            ) %>%
+  mutate(HR_per_player = totalHR / players) %>%
+  left_join(Teams, by = c("teamID", "yearID")) %>%
+  group_by(name, teamID) %>%
+  summarise(
+            avgHR_per_player = mean(HR_per_player, na.rm = TRUE)
+            ) %>%
+  arrange(desc(avgHR_per_player))  %>% 
+  head(5)
+```
+
+
+
+# Joining fligths data  
+
+Use the `{nycflights13}` package to answer the following questions. [A description of the package is available at CRAN](https://cran.r-project.org/web/packages/nycflights13/nycflights13.pdf).
+
+## How many different planes? (5P)
+
+Use the `flights` and `planes` tables (in the `{nycflights13}` package) to answer the following questions. 
+
+### Primary keys
+
+* Does `planes` table have a primary key? 
+* Can you identify a primary key in `planes` table? 
+* Show that `tailnum` is not a primary key in `flights` table. 
+* How many different planes departed from "JFK" in 2013?
+
+Anwser: This shows why tailnum can not be a Primary key
+```{r}
+flights %>% 
+  count(tailnum) %>% 
+  filter(n > 1)
+```
+
+
+```{r}
+# How many different planes departed from "JFK" in 2013?
+flights %>% 
+  filter(origin == "JFK", year == 2013) %>% 
+  distinct(tailnum) %>% 
+  count()
+```
+
+### Join tables the flight and planes tables.
+
+Use and compare inner/right/left/full join to combine the `flights` data with the `planes` data. 
+
+* How many of the planes in the planes table departed from "JFK" in 2013?
+* Have planes departed from "JFK" that are not in the planes table?
+* How many of the different ***planes in the `planes` table*** flew from New York City in 2013?
+* Which join commands yield correct/wrong results and why? 
+
+```{r}
+jfk_flights_2013 <- flights %>% 
+  filter(origin == "JFK", year == 2013) 
+```
+
+***Inner Join***
+
+```{r}
+inner_join_result <- inner_join(jfk_flights_2013, planes, by = "tailnum")
+```
+
+***Right Join***
+
+```{r}
+right_join_result <- right_join(jfk_flights_2013, planes, by = "tailnum")
+```
+
+***Left Join***
+
+```{r}
+left_join_result <- left_join(jfk_flights_2013, planes, by = "tailnum")
+```
+
+***Full Join***
+
+```{r}
+full_join_result <- full_join(jfk_flights_2013, planes, by = "tailnum")
+```
+
+How many of the planes in the planes table departed from "JFK" in 2013?
+```{r}
+# Inner Join: Correct for identifying planes from JFK in 2013 that are in the planes table
+n_distinct(inner_join_result$tailnum)
+
+# Right Join: Incorrect for this specific query as it includes all planes, not just those from JFK
+n_distinct(right_join_result$tailnum)
+
+# Left Join: Incorrect as it includes flights from JFK, even those not in the planes table
+n_distinct(left_join_result$tailnum)
+
+# Full Join: Incorrect for this specific query as it includes all flights and all planes
+n_distinct(full_join_result$tailnum)
+```
+
+Have planes departed from "JFK" that are not in the planes table?
+```{r}
+# Inner Join: Incorrect, it only shows planes that are in both flights and planes table
+sum(is.na(inner_join_result$tailnum))
+
+# Right Join: Incorrect, focuses on planes in the planes table
+sum(is.na(right_join_result$tailnum))
+
+# Left Join: Correct for identifying flights from JFK that are not in the planes table
+sum(is.na(left_join_result$tailnum))
+
+# Full Join: correct, as it includes all data regardless of whether a plane from the flights table has a corresponding record in the planes table or not
+sum(is.na(full_join_result$tailnum))
+```
+
+How many of the different ***planes in the `planes` table*** flew from New York City in 2013?
+```{r}
+ny_flights_2013 <- flights %>% filter(year == 2013 & (origin %in% c("JFK", "LGA", "EWR")))
+inner_join_result <- inner_join(ny_flights_2013, planes, by = "tailnum")
+right_join_result <- right_join(ny_flights_2013, planes, by = "tailnum")
+left_join_result <- left_join(ny_flights_2013, planes, by = "tailnum")
+full_join_result <- full_join(ny_flights_2013, planes, by = "tailnum")
+```
+
+```{r}
+# Inner Join: Correct for identifying planes from the planes table that flew from NYC
+n_distinct(inner_join_result$tailnum)
+
+# Right Join: Incorrect, focuses on all planes in the planes table, regardless of their flights
+n_distinct(right_join_result$tailnum)
+
+# Left Join: Incorrect, includes flights from NYC, even those not in the planes table
+n_distinct(left_join_result$tailnum)
+
+# Full Join: Incorrect, combines all flights and planes, including irrelevant data 
+n_distinct(full_join_result$tailnum)
+```
+
+## The oldest plane that departed from New York Airport (3P)
+
+What is the oldest plane (specified by the `tailnum` variable) that flew from New York City airports in 2013? Use the `flights` and `planes` tables (in the `nycflights13` package). Rename `year` in `planes` to `plane_year` to avoid collision with `year` in `flights`. 
+```{r}
+#planes <- rename(planes, plane_year=year)
+flights %>%
+  filter(year == 2013 & (origin %in% c("JFK", "LGA", "EWR"))) %>% 
+  inner_join(planes, by="tailnum") %>% 
+  filter(!is.na(plane_year)) %>% 
+  arrange(plane_year) %>% 
+  select(tailnum, plane_year) %>% 
+  head(1)
+```
+
+
+
+\newpage
+# Grammer of Graphics
+
+## Analysis of a graph (4P)
+Analyze the following graphical data presentation by considering the following points:
+
+  a. Identify the visual cues, coordinate system, and scale(s).
+  b. How many variables are depicted in the graph? 
+  c. Explicitly link each variable to a visual cue that you listed above.
+  d. Critique this data graphic using the taxonomy described in lecture slides.
+
+![](Tax.png)
+
+\newpage
+## Improve a graphical data presentation (4P)
+Analyze the following graph by considering the following points:
+
+ a. Critically assess the designer's choices for the graphical data presentation. 
+ b. Suggest improvements for the graph.
+
+![](food.png)
+

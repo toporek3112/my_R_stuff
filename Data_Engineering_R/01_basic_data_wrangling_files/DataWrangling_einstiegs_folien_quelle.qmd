@@ -1,0 +1,166 @@
+---
+title: "Data Wrangling - Datenaufbereitung"
+output:
+  pdf_document:
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
+  html_document:
+    toc: yes
+    toc_depth: '3'
+    df_print: paged
+---
+
+
+# Data Wrangling - Datenaufbereitung
+
+Datenaufbereitung in R mit dem package `dplyr`.   
+
+## Grammatik der Datenaufbereitung
+Hadley Wickham, einer der Autoren von `dplyr` hat fünf Verben für die Arbeit mit Daten in einem `dataframe` identifiziert:   
+ 
+ - `select()` Teilmenge an Spalten (d. h. Features, Variablen) auswählen   
+ 
+ - `filter()` Teilmenge an Zeilen (d. h. Beobachtungen) auswählen    
+ 
+ - `mutate()` Spalten hinzufügen oder modifizieren    
+ 
+ - `arrange()` sortieren von Zeilen (d. h. Beobachtunen)     
+ 
+ - `summarize()` aggregieren von Spalten (über Zeilen hinweg) z. B. gruppieren nach bestimmten Kriterien
+ 
+Jeder Befehl hat einen `dataframe` als erstes (Input-)Argument und einen `dataframe` als Rückgabewert.
+
+ - die Befehle können zusammen (verschachtelt) verwendet werden 
+ 
+ - zum Aufbereiten einer **einzelnen Datentabelle**.
+
+Lade das package `dplyr` damit `select()`, `filter()`, etc. verwenden kann.
+```{r}
+library(dplyr)
+```
+Es kann auch `tidyverse` geladen werden, denn es enthält `dplyr`.
+
+
+## Beispieldaten
+Als Beispielsdaten dienen die folgenden Noten von drei Studenten
+```{r}
+df <- data.frame(
+  student = rep(c("Anna","Beate","Chris"),3), 
+  semester= rep(seq(from=1, to=6, by=2)  ,3),
+  note    = c(1,2,1,4,5,1,3,3,3)
+  )
+df
+str(df)
+```
+Ein `dataframe` ist nötig aber `tibble` ist nicht nötig.  
+
+### `select()` - Auswählen von Spalten (Variablen oder Features)
+
+```{r}
+select(df, student, semester)
+```
+Mit Befehl `unique()` aus dem package `base` jeden Studenten(-Namen) nur einmal anzeigen. Das package `base` wird beim starten von `R` automatisch geladen.
+
+```{r}
+unique(select(df, student, semester))
+```
+### `filter()` - Auswählen von Zeilen (Wertebereich einschränken)
+```{r}
+filter(df, note==1)
+filter(df, note<=2)
+filter(df, note==1 & student != "Anna")
+unique(
+  select(
+    filter(df, note==1 & student != "Anna"), student
+  )
+)
+filter(df, note>1 & student %in% c("Anna", "Chris") )
+```
+Die Variable `student` wird für die Überprüfung von `student=="Anna"` benötigt und daher `filter()` vor `select()` ausgeführt.
+
+### `mutate()` - Variable `textnote` hinzufügen
+```{r}
+df <-
+mutate(df, textnote = ifelse(note==1, "sehr gut",
+                             ifelse(note==2, "gut",
+                                    ifelse(note==3, "befriedigend",
+                                           ifelse(note==4, "genügend", "nicht genügend")
+                                           )
+                                   )
+                            )
+       )
+df
+```
+### `mutate()` - Variable `textnote` verändern
+Varialbe `textnote` vom Typ `<chr>` in den Typ `<fct>` ändern:
+```{r}
+df <- mutate(df, textnote = as.factor(textnote))
+df
+```
+Rename variable `student` into Varialbe `student_name` :
+```{r}
+rename(df, student_name = student)   ## NB: new_variable = Old_variable (--> old_variable vaishes) 
+```
+
+----
+Mit `rename(df, `**new_**`variable = ` **old_**`variable)` und die **old_**`variable` verschwindet 
+----
+
+
+### `arrange()` - Zeilen sortieren nach Spalteneinträgen
+
+```{r}
+arrange(df, note, desc(semester))
+```
+
+### `summarize()` - Daten zusammenfassen
+In amerikanischer `summarize` und englischer `summarise` Schreibweise verfügbar.
+
+```{r}
+summarize(df,      ## dataframe is 1. Arguemnt 
+          N=n(),   ## always use N=n() for proper functioning
+          notenschnitt= mean(note), 
+          best_note   = min(note), 
+          worst_note  = max(note)
+          )
+```
+------------
+`N=n(),` immer verwenden damit `summarize()` einwandfrei funktioniert
+-----------
+
+
+### `summarize()` und `group_by()` - Daten gruppeniert zusammenfassen
+
+Die Daten nach Studenten(-Namen) gruppieren und zusammenfassen:
+```{r}
+summarize(group_by(df, student),   ## dataframe is 1. Arguemnt 
+          N=n(),                   ## always use N=n() 
+          notenschnitt= mean(note), 
+          best_note   = min(note), 
+          worst_note  = max(note)
+          ) %>% arrange(notenschnitt)  ## use %>% pipe  to ammend by another command
+```
+----
+`group_by` macht aus dem `dataframe` einen `tibble`
+----
+
+Rewrite with `%>%` Pipe and select only student und notenschnitt:
+```{r}
+df %>% group_by(student) %>% summarise(
+          N=n(),                   ## always use N=n() 
+          notenschnitt= mean(note), 
+          best_note   = min(note), 
+          worst_note  = max(note)) %>% 
+  arrange(notenschnitt) %>% 
+  select(student, notenschnitt)
+```
+
+Die Daten nach Noten gruppieren und zusammenfassen:
+```{r}
+df %>% group_by(note) %>% summarize(N=n()) %>% 
+  arrange(desc(N)) %>% 
+  select(N, note)
+
+```
+

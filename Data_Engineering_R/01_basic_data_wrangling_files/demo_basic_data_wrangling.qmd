@@ -1,0 +1,345 @@
+---
+title: |
+  R1: Basic Data Wrangling \ 
+#Basic Data Wrangling
+author: Andreas Reschreiter
+date: today
+subtitle: "Data manipulation with `{dplyr}` in `{tidyverse}`"
+
+embed-resources: true
+
+format:
+  html: 
+    output-file: R1_basic_data_wrangling_html.html 
+    toc: true
+    toc-location: right
+    code-link: true
+    code-tools: true
+  pdf: 
+    output-file: R1_basic_data_wrangling_pdf.pdf 
+    toc: true
+    number-sections: true
+    code-link: true
+  revealjs:
+    output-file: R1_basic_data_wrangling_presentation.html 
+    slide-level: 2
+    #slide-tone: true
+    slide-number: c/t
+    #toc: true
+    echo: true
+    code-fold: show
+    code-tools: true
+    code-line-numbers: false
+    #code-link: true
+    scrollable: true
+    #smaller: true
+    theme: dark
+    reference-location: document
+    
+fig-align: center
+execute: 
+  warning: false
+  
+---
+
+
+# Tidy data modelling
+
+Packages used in this notebook:
+
+```{r}
+#| code-summary: Libraries
+suppressPackageStartupMessages({
+  library(tidyverse)
+}) 
+```
+
+## Tidy data and tidyverse
+
+The "`{tidyverse}`" is a set of related R packages designed for data science. One of the core packages is `{dplyr}` used for transformation of data frames or, better, "`tibble()`". A `tibble()` (from the abbreviation "tbl" for table) is basically a data frame that "behaves" and prints in a slightly better way than standard R `data.frame()`.
+
+## Tidy data
+
+Tidy data satisfies the following criteria:
+
+* Each column represents a variable (i.e. feature)
+* Each row is an observation (i.e. case) of data
+
+Data in `tibble()` and `data.frame()` is tipically tidy data.^[The `{tidyverse}` has this tidy data principle in its name.] 
+
+# Pipe operator
+
+The `{tidyverse}` pipe `%>%` (`magrittr` pipe) and base R pipe `|>` (native pipe).
+
+## The `{tidyverse}` pipe `%>%` 
+
+* The function `f(x,a)` can be written as `x %>% f(a)`. 
+* The pipe `%>%` simplifies the execution of several functions. 
+* For example `h(g(f(x,a),b),c)` becomes the more readable expression `x %>% f(a) %>% g(b) %>% h(c)` as the functions are placed one after the other.
+* The `{tidyverse}` pipe `%>%` is part of the `{magrittr}` package that contains additional pipe operators. The `%>%` is therefore known as `{magrittr}` pipe.
+* The pipe `%>%` requires tidy data and reads as "and then".
+
+---
+
+* The `%>%` operator must always appear at the end of lines.
+* To persist changes 
+  - `data <- data %>% ...` or:
+  - `data %<>% ...`
+* By default piped into first function argument  
+  - `x %>% foo(y)` becomes `foo(x, y)`
+* Non default piped into not first function argument
+  - `y %>% foo(x, .)` becomes `foo(x, y)`
+  - `d %>% lm(y~x,data=.)` becomes `lm(y~x,data=d)`
+  - `mydata %>% .[[1]]` becomes `mydata[[1]]`
+
+## The base R pipe `|>` operator
+
+* Since R version 4.1 a base R pipe `|>` operator exists. It is called **native pipe** (needs no loading of a package).
+* By default `|>` pipes into first function argument  \
+  `x |> foo(y)` becomes `foo(x, y)` 
+* Non default pipe by naming (all) arguments  \
+  `y |> foo(a=x,b=)` becomes `foo(a=x,b=y)` \    
+  `d |> lm(formula=y~x,data=)` 
+* Non default pipe by function definition   \
+  `mydata |> \(x) lm(y~x, data = x)` \   
+  `mydata |> \(.) lm(y~x, data = .)`
+
+ 
+
+# Make tibbles
+
+From `data.frame()` with `as_tibble()`, column-wise from vectors with `tibble()` and row-wise with `tribble()`.  
+
+## From data frames
+
+Use the command `as_tibble()` to create a tibble from a data frame. Consider the `datasets::iris` data frame 
+
+```{r}
+str(iris)
+data = as_tibble(iris)
+str(data)
+```
+
+**Note**: The resulting `tibble()` is still also a `data.frame()` and all operations for a `data.frame()` still work (due to class inheritance).
+
+```{r}
+class(data)
+```
+
+
+```{r}
+as_tibble(iris)
+```
+
+The `iris` data in the format of a `tibble` prints on "one screen" in contrast to the original `iris` data in the data frame that prints out the whole data (in the R-Markdown output).
+
+## Column-wise
+
+Create a `tibble` column-wise from data vectors with the command `tibble()`:
+
+```{r}
+tibble(A = 1:26, B = letters)
+```
+
+## Row-wise
+
+Create a tibble by row-wise data specification with the command `tribble()`. This is particularly useful for adding new cases of data (observations) via new lines of data entries.
+
+```{r}
+tribble(~A, ~B,
+        1,  "bla",
+        2,  "foo")
+```
+
+
+{{< pagebreak >}}  <!-- \newpage -->
+
+# Basic data manipulation
+
+The ground functions of the `{dplyr}` package are: `select()`, `filter()`, `mutate()`, `arrange()`, and `group_by()` / `summarize()`.
+
+## `select()` columns
+
+`select()` is used to **choose** and  **exclude** *columns*:
+
+```{r}
+#| layout-ncol: 2
+select(data, Petal.Width, Species)
+select(data, -Sepal.Length, -Sepal.Width, -Petal.Length)
+```
+
+`select()` on **parts of column name**:
+
+```{r}
+#| layout-ncol: 3
+
+# NOTE uses chunk option: #| layout-ncol: 3
+select(data, starts_with("Sepal")) %>% head() # shorten printout
+select(data, ends_with("Length"))  |>  head() # native pipe
+select(data, contains("l.L"))      %>% head   # shorten printout
+```
+
+## `filter()` rows
+
+`filter()` to **choose** or **exclude** rows
+
+```{r}
+#| layout-ncol: 2
+# NOTE filter first and select afterwards
+filter(data, Species == "versicolor") |> select(1:2)
+filter(data, Species != "versicolor") |> select(last_col())
+```
+
+---
+
+### `filter()` composed conditions
+
+```{r}
+#| layout-nrow: 2
+
+# NOTE uses chunk option: #| layout-nrow: 2
+filter(data, Sepal.Length > 5 & Sepal.Width > 4) ## same as next
+filter(data, Sepal.Length > 5 , Sepal.Width > 4) ## same as above
+```
+
+---
+
+### `filter()` specified range
+
+```{r}
+filter(data, between(Petal.Length, 1, 1.2))
+```
+
+
+
+
+## `mutate()` variables
+
+### Modify existing variables
+
+```{r}
+mutate(data, Sepal.Length = round(Sepal.Length)) %>% 
+  head(3) 
+```
+
+---
+
+### Add new variable (based on an existing ones)
+
+```{r}
+mutate(data, Sepal = ifelse(Sepal.Length > 5, "Long", "Short"), .after = 2) %>% 
+  head() 
+```
+
+---
+
+### Add new variable (independent variable)
+
+```{r}
+add_column(data,                          
+           ID = paste("id", 1:150), 
+           .before = "Sepal.Length") %>% head() 
+```
+
+---
+
+### Remove variable
+
+```{r}
+mutate(data, Species = NULL) %>% head() 
+```
+
+
+## `rename()` variables
+
+```{r}
+rename(data, Sepal_Length = "Sepal.Length") %>% head() 
+```
+
+
+## `arrange()` rows to sort data
+
+Sort ascending:
+
+```{r}
+arrange(data, Sepal.Length) # NOTE sort ascending is default
+```
+
+---
+
+Sort `Species` descending and then according to `Sepal.Length` ascending:
+
+```{r}
+arrange(data, desc(Species), Sepal.Length)
+```
+
+## `top_n()` for top rows
+
+```{r}
+top_n(data, 5, Sepal.Width)
+```
+
+Note that 6 rows are returned because of ties, and data are not sorted.
+
+## `summarize()` columns
+
+Create summary statistics (UK `summarise()` is same as `summarize()`):
+
+```{r}
+summarize(data, 
+          N = n(), 
+          minimum = min(Sepal.Length), 
+          maximum = max(Sepal.Length),
+          mean = mean(Petal.Width))
+```
+
+## `group_by()` to group columns data
+
+Summaries on grouped data:
+
+```{r}
+summarize(group_by(data, Species),
+          N = n(), 
+          minimum = min(Sepal.Length), 
+          maximum = max(Sepal.Length),
+          mean = mean(Petal.Width))
+
+```
+
+
+---
+
+Examples of using `group_by()` without aggregation:
+
+```{r}
+mutate(group_by(data, Species), id = 1:n())
+```
+
+---
+
+This gives each group in the Species an index `id`:
+
+```{r}
+slice(mutate(group_by(data, Species), id = 1:n()), 1:3)
+```
+
+---
+
+Using the pipe `%>%` to achieve the same result:
+
+```{r}
+data %>%  group_by(Species) %>% mutate(id = 1:n()) %>% slice(1:3)
+```
+
+---
+
+Group on two columns:
+
+```{r}
+data %>% mutate(Sepal = ifelse(Sepal.Length > 5, "Long", "Short")) %>%
+  group_by(Species, Sepal) %>% 
+  mutate(id = 1:n()) %>% 
+  slice(1:2)  
+```
+
+**Note:** operations using `group_by()` follow the split/transform/combine paradigm.

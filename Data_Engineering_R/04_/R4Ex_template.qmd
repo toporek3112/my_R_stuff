@@ -1,0 +1,238 @@
+---
+title: "R4 Exercises: Graphing data relations"
+author: "INSERT HERE YOUR NAME"
+date: today
+embed-resources: true
+format:
+  html: 
+    toc: true
+    toc-location: right
+    code-link: true
+    code-tools: true
+    df-print: paged
+  pdf:
+    number-sections: true
+    toc: true
+params:
+  printcode: TRUE
+  printoutput: TRUE
+---
+
+```{r setup, include=FALSE}
+## set global chunk options
+knitr::opts_chunk$set(
+  warning = FALSE,
+  message = FALSE,
+  echo = params$printcode,
+  eval = params$printoutput,
+  fig.align = "center",
+  out.width = "75%"
+)
+```
+
+
+---
+
+Packages used in this notebook:
+
+```{r}
+
+```
+
+---
+
+
+# Visualise `RailTrail` data
+
+Use the `mosaicData::RailTrail` data set from the `{mosaicData}` package. [See for a description of the data]( https://www.rdocumentation.org/packages/mosaicData/versions/0.17.0/topics/RailTrail). According to [Cambridge.org](https://dictionary.cambridge.org/de/worterbuch/englisch/rail-trail) is a rail-trail a path for walking or bicycle riding, created from a railway that is no longer used by trains. 
+
+```{r}
+
+```
+
+## Scatterplot (2P)
+
+Create a scatterplot of the number of crossings per day, `volume`, against the high temperature, `hightemp`, of that day. Use  a header and legends appropriately and interpret the resulting graph.
+
+```{r}
+
+```
+
+## Separate scatterplots during week and weekend  (2P)
+
+Separate the above scatter plot into facets by weekday. Use  a header and legends appropriately and interpret the resulting graph.
+
+```{r}
+
+```
+
+## Add regression lines (2P)
+
+Add  regression lines to the two facets. Show the results for linear and nonlinear regression lines. Use a header and legends appropriately and interpret the resulting graphs.
+
+### Linear Regression Line
+
+```{r }
+
+```
+
+### Nonlinear Regression Line
+
+```{r}
+
+```
+
+
+
+
+
+# Visualise `mtcars` data
+
+Use the `mtcars` data. A [description of the data is available](https://www.rdocumentation.org/packages/datasets/versions/3.6.2/topics/mtcars). 
+
+First transform the variables in the `mtcars` data into European measures and then graph the data as requested in the following.
+
+## Transform `mtcars` into European measures (3P)
+
+For the transformation into European measures consider that   
+
+   - `1 mile = 1.609 km`
+   - `1 gallon = 3.785 liter`
+   - `1 liter = 61.0237 cu.in`
+   - `1 kg = 2.20462 lbs`
+
+Create the following variables:
+
+ - transform `mpg` into `verbrauch` as measure for the fuel consumption in `liter` per `100 km`.
+ - rename `cyl` into `zylinder` as number of cylinders.
+ - transform `disp` into `hubraum` as the size of the engine measured in liters.
+ - transform `qseq` into `beschleunigung` to measure the seconds it takes to accelerate to `100 km/h`. `qseq` are the seconds it takes to travel `1/4` mile. For the transformation assume a __constant acceleration__ (__constant increase of the speed__) until the car reaches `1/4` mile. The speed starts at zero and the final speed at `1/4` mile is twice the average speed (as measured  by traveling a `1/4` mile in `qsec`). 
+ - rename `drat` into `drehmoment`
+ - transform `wt` (1000 lbs) into `gewicht` (1000 kg).
+ - transform `am` into `schaltung` as `Automatik` for `am = 0` and `Manuell` for `am = 1`
+ - transform `vs` into `motor` as `V-Motor` for `vs = 0` and `Reihenmotor` for `vs = 1`
+
+```{r}
+ 
+```
+
+## Graph `verbrauch` as determined by `hubraum` (2P)
+
+Explain the variable `verbrauch` through `hubraum` in a scatter plot. Include `hp` and `beschleunigung` as determinants of the variable `verbrauch` through the color and size of the data points in the scatter plot, respectively. The resulting graph should look like this:
+
+
+```{r }
+
+#g
+#ggsave("Exercise_cars_verbrauch_hubraum.png")
+```
+
+<!-- ![](Exercise_cars_verbrauch_hubraum.png) -->
+
+
+
+## Interpret the graph (2P)
+
+What does the graph reveal about the relation between the different variables in the data set?
+
+```{r eval=FALSE}
+# The graph shows: 
+
+  
+```
+
+## Automatic versus Manual (2P)
+
+Show the above graph for cars with automatic and manual gear shifting and interpret the resulting graph.
+
+```{r}
+
+#g
+#ggsave("Exercise_cars_facet_am.png")
+```
+
+<!-- ![](Exercise_cars_facet_am.png) -->
+
+
+```{r eval=F}
+# Interpretation of the graph:
+
+  
+```
+
+
+
+## Show cars with very high fuel consumption (1P)
+Show the names of the cars (together with `verbrauch`, `hubraum`, `beschleunigung`, `hp` and `gewicht`) that have more than 20 liters of fuel consumption per 100 km (in the graph at the top right corner) or an engine size of more than 7 liters.
+
+```{r}
+
+```
+
+
+## Show cars with very high acceleration (1P)
+
+Show the names of the cars (together with `verbrauch`, `hubraum`, `beschleunigung`, `hp` and `gewicht`) that have a `beschleunigung` of less than 7.5 seconds. 
+
+```{r}
+
+```
+
+
+```{r}
+## Insert a table into a graph
+# library(ggpmisc) 
+# df <- cars %>% filter(hubraum >= 7 | verbrauch >= 20 ) %>% select(c('car_name','verbrauch','hubraum')) %>% mutate(across(2:3, round, 1))
+# g + geom_table(aes(x=1.1, y=23, label=list(df)))
+```
+
+
+
+# Visualise dietary data
+
+Use the code `data("UScereal", package = "MASS")` for the `UScereal` data from the `MASS` package. See https://www.rdocumentation.org/packages/MASS/versions/7.3-53/topics/UScereal for details. Adjust the
+Manufacturer in `mfr` (represented by its first initial): G=General Mills, K=Kelloggs, N=Nabisco, P=Post, Q=Quaker Oats, R=Ralston Purina and the display shelf in `shelf` (1, 2, or 3, counting from the floor) into  `bottom-shelf`, `middle-shelf` and `top-shelf`. 
+```{r warning=T, message=T}
+#library(MASS)  # überschreibt select() in dplyr package ---> do not use library(MASS)   
+data("UScereal", package = "MASS") # überschreibt select NICHT
+
+
+```
+
+## Graph  the relationship between calories and fat (2P)
+Visualize the relationship of calories with fat. Additionally, highlight whether the product has been enriched with vitamins. 
+<!-- Use appropriate titles and legends. -->
+
+```{r}
+
+```
+
+## Graph the information for different shelves (2P)
+
+As an extension to the previous plot, create plots differentiating between shelves.
+
+```{r}
+
+```
+
+## Graph  the relationship between sugar and fat (2P)
+
+Visualize the relationship of sugar and fat. Additionally, highlight whether the product has been enriched with vitamins. Also show the calories. 
+<!-- Use appropriate titles and legends. -->
+
+```{r}
+
+```
+
+
+## Graph  the information separately for each manufacturer (2P)
+
+As a first extension to the previous plot, show the information separately for each manufacturer, using facets. 
+
+```{r}
+
+```
+
+
+
+

@@ -1,0 +1,139 @@
+---
+title: "R2 Exercises: Advanced Data Wrangling"
+author: "INSERT HERE YOUR NAME"
+date: today
+embed-resources: true
+format:
+  html: 
+    toc: true
+    toc-location: right
+    code-link: true
+    code-tools: true
+---
+
+```{r setup, include=FALSE}
+## set global chunk options
+knitr::opts_chunk$set(warning = FALSE, message = FALSE,
+                     # include = FALSE, ## F --> no code + no output
+                     #  echo = FALSE,    ## F --> no code, only output
+                     #  eval = FALSE,    ## F --> only code, no output 
+                      fig.align = "center")
+```
+
+------------------------------------------------------------------------
+
+Packages used in this notebook:
+
+```{r}
+library(tidyverse)
+```
+
+------------------------------------------------------------------------
+
+# Advanced data manipulation
+
+## Advanced `select` (3P)
+
+Use the `state.x77` data, transformed into a tibble and select all variables whose names consist of more than one word. If possible use the `%>%` operator:
+
+```{r}
+
+```
+
+## Advanced `filter` (3P)
+
+From the \texttt{starwars} data, get all creatures with some missing value anywhere in character columns. (Hint: use \texttt{is.character()} and \texttt{is.na()}). Show only the variables of type character.
+
+```{r}
+
+```
+
+## Advanced `rename` (3P)
+
+In the `state.x77` data, rename all variables to lowercase. Replace spaces in the variable names with underscores.
+
+```{r}
+
+```
+
+# Special data formats
+
+## The `rownames` in `state.x77` (3P)
+
+Show the data in `rownames` of `state.x77`. Convert `state.x77` to a tibble keep the data in `rownames` in a new variable `state_name`. Show this for both with `rownames_to_column()` and `rownames`. Convert the column `state_name` back into `rownames` using `column_to_rownames()` (limited output!).
+
+```{r}
+# use rownames_to_column("state_name") 
+# use as_tibble(rownames = "state_name")
+
+```
+
+## Transform `friends` into long and wide format (3P)
+
+Consider `friends` in wide format:
+```{r include=TRUE, eval=TRUE, echo=FALSE}
+friends = tribble(
+  ~fname ,  ~sname   , ~height, ~weight, ~age,
+  "Susan",  "Winter" , 180 ,     70 ,     25,
+  "Walter", "Spring" , 185 ,     80 ,     30,
+  "Tim",    "Tailor" , 190 ,     100,     22 
+)
+friends
+```
+
+Use `gather()` / `pivot_longer()` to transform the wide data in `friends` into long format:
+
+```{r}
+
+```
+
+Use `spread()` / `pivot_wider()` to transform the long data `friends_long` back into wide data format:
+
+```{r}
+
+```
+
+# Combining data
+
+## Merge US states data (3P)
+
+Add `state.region` and `state.division` to `state.x77` using `bind_cols()`. (Hint: convert `state.x77` to a tibble using `as_tibble(..., rownames = "state"))` to keep the rownames). Restrict the data to the variables `state`, `Population`, `Murder`, `Region`, `Division`.
+
+```{r}
+
+```
+
+## Add USArrests data to states data (3P)
+
+Join to the above `states` data the `USArrests` data using `inner_join()`. (Hint: convert `state.x77` to a tibble using `as_tibble(..., rownames = "state"))` to keep the rownames.)
+
+```{r}
+
+```
+
+## Join `friends` statistics (4P)
+
+Consider the following `friends` data
+```{r include=TRUE, eval=TRUE, echo=FALSE}
+friends = tribble(~name   , ~height, ~weight, ~sex    ,
+                  "Susan" , 1.80    , 70     , "Female",
+                  "Walter", 1.85    , 85     , "Male"  ,
+                  "Tim"   , 1.90    , 100    , "Male"  ,
+                  "Ann"   , 1.72    , 75     , "Female") %>% 
+          mutate(bmi=weight/(height**2), .after="name")
+friends
+```
+with the grouped statistics: 
+```{r include=TRUE, eval=TRUE, echo=FALSE}
+summarized = summarise(group_by(friends, sex),
+                       mean_height = mean(height),
+                       mean_bmi = mean(bmi))
+summarized
+```
+
+Add the grouped statistics `mean_height` and `mean_bmi` adequately (according to sex) to the `friends` data:
+
+```{r}
+
+
+```

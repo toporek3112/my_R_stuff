@@ -1,0 +1,323 @@
+---
+title: "R2: Advanced Data Wrangling"
+subtitle: "Data manipulation with `{dplyr}` in `{tidyverse}`"
+author: "Andreas Reschreiter"
+date: today
+embed-resources: true
+
+format:
+  html: 
+    output-file: R2_html.html
+    #output-ext: "html.html" 
+    toc: true
+    toc-location: right
+    code-link: true
+    code-tools: true
+    theme:
+      light: flatly
+      dark: darkly
+  pdf: 
+    output-file: R2_pdf.pdf 
+    toc: true
+    number-sections: true
+    code-link: true
+  revealjs:
+    output-file: "R2_revealjs.html"
+    #output-ext: "revealjs.html" 
+    theme: sky
+    slide-level: 2
+    #slide-tone: true
+    slide-number: c/t
+    #toc: true
+    echo: true
+    code-fold: show
+    code-tools: true
+    code-line-numbers: false
+    #code-link: true
+    scrollable: true
+    #smaller: true
+    reference-location: document
+    self-contained-math: true
+    self-contained: true
+    
+fig-align: center
+execute: 
+  warning: false
+  
+---
+
+
+Packages used in this notebook:
+
+```{r}
+#| code-summary: Libraries
+suppressPackageStartupMessages({
+  library(tidyverse)
+}) 
+```
+
+
+# Advanced data manipulation
+
+
+## Regular expressions
+
+Regular expressions allow advanced data manipulation:
+
+```{r out.width="40%", echo=FALSE}
+knitr::include_graphics("R2_REGULAR_EXPRESSION.PNG")
+```
+
+## Rules
+
+Following rules apply for symbols on how many times:
+
+| Symbol | Meaning | In other words|
+|:------:|---------| --------------|   
+|    `?` | zero or one | at most once |
+|    `*` | zero or more| any          |
+|    `+` | one or more | at least once |
+
+
+
+## Advanced `select` columns
+
+A regular expression can be used to select only column names that begin with the letter `S` and contain somewhere in the column name at least once a `.` in combination with `matches()`: 
+
+```{r}
+data = as_tibble(iris)
+select(data, matches("^S.*\\."))
+```
+The regular expression `^S.*\\.` shows only data with column (names) that satisfy the following conditions:
+
+- The first part in the regular expression `^S` specifies that the column name begins with an "S" 
+
+- The regular expression term  .* means that any characters can follow (zero or more times) after the "S" at the beginning of the column name 
+
+- The regular expression part `\\.` is needed, because the `.` has a special meaning in regular expressions. The `.` needs the escape character `\` in front of it. The escape character `\` itself need also an escape character `\` and this results in the term `\\` before the `.` and in the `\\.` part of the regular expression.
+
+## Advanced `filter` rows
+
+Find all rows where *any* variable has a value > 5:
+
+```{r}
+filter_all(data, any_vars(. > 5))
+```
+
+Find all rows where *all* variables ending with `Length` have a value > 5:
+
+```{r}
+filter_at(data, vars(ends_with("Length")), all_vars(. > 5))
+```
+
+Find all rows where all numeric variables exceed 2:
+
+```{r}
+filter_if(data, is.numeric, all_vars(. > 2))
+```
+
+
+## Advanced `rename` columns
+
+Rename several variables with a transform function:
+
+```{r}
+rename_all(data, str_replace, "\\.", "_")
+```
+
+
+# Spezial data formats
+
+## Data in `rownames`
+
+The `rownames()` of a `data.frame` may contain important information. 
+```{r}
+USArrests %>% head(4)
+```
+
+Consider the `USArests` data set and the information in `rownames()`: 
+```{r}
+rownames(USArrests)
+```
+The names of the 50 states are in `rownames()` and the names of the states are lost with a too simple transformation into a `tibble`:
+```{r}
+as_tibble(USArrests) %>% head(4)
+```
+The `rownames()` can be placed into a separate column before the transformation into a tibble: 
+```{r}
+USArrests %>% rownames_to_column("state") %>% as_tibble %>% head(4)
+```
+Alternatively the following also keeps the `rownames`:
+```{r}
+USArrests %>% as_tibble(rownames = "state") %>% head(4)
+```
+
+
+## Long and wide data
+
+Consider the wide data format of the `USArrests` data:
+
+```{r}
+USArrests %>% filter(Murder > 16)
+```
+
+Use `pivot_longer()` to get wide data into long format:
+```{r}
+
+USArrests |> 
+  filter(Murder > 16) |> 
+  rownames_to_column(var = "State") |> 
+  pivot_longer(
+    cols = -c("State","UrbanPop") # NOTE all columns expect State & urbanPop
+    # ,names_to = "Crime"         # NOTE name if not specified
+    # ,values_to = "Arrests"      # NOTE value if not specified
+    ) -> arrests_long
+
+arrests_long
+```
+
+Older code may use `gather()` to transform wide data into long format:
+
+```{r}
+arrests_long <- USArrests %>% filter(Murder > 16) %>% 
+  rownames_to_column("State") %>% ## to keep info -- gather() will remove rownames
+  gather(key   = "Crime",      
+         value = "Arrests",
+         Murder, Assault, Rape)
+arrests_long
+```
+
+Use `pivot_wider()` for transforming long into wide format:
+```{r}
+arrests_long |> 
+  pivot_wider(
+    names_from = "Crime",
+    values_from = "Arrests")
+```
+
+Older code may use `spread()` for transforming long into wide format:
+
+```{r}
+arrests_long %>% spread(Crime, Arrests) 
+```
+
+
+## `iris` data wide and long
+
+* Transform `iris` into long format and back. 
+* Need an unique identifier (like `id`) for each case (row). 
+
+Without `id` variable:
+
+```{r}
+iris |> as_tibble() |> 
+  pivot_longer(cols = -Species) # NOTE row information is lost 
+iris |> as_tibble() |> 
+  pivot_longer(cols = -Species) |> 
+  pivot_wider(
+    names_from = "name",
+    values_from = "value")
+```
+
+
+With an `id` variable as identifier
+
+```{r}
+iris_long <- iris |> 
+  as_tibble() |> 
+  group_by(Species) |>                    # NOTE group by different Species (id=1..50)
+  mutate(id = row_number(), .before=1) |> # NOTE rownumber() as id per Species
+  ungroup() |>                            # NOTE remove grouping of data    
+  pivot_longer(cols = -c("id","Species")) # NOTE keep info about data link
+
+iris_long |> 
+  arrange(id, Species)  # alternatively slice_sample(n = 7)
+```
+
+
+```{r}
+iris_long |> 
+  pivot_wider(
+    names_from = "name",
+    values_from = "value")
+```
+
+## A `sample_df` wide and long
+
+[Source: R-Studio Community](https://community.rstudio.com/t/restructuring-the-data/119154)
+
+Transform the following `sample_df` into long-format and add a variable `Response_Age`:
+
+```{r}
+#| code-fold: true
+sample_df <- data.frame(
+  stringsAsFactors = FALSE,
+                ID = c("001", "002", "003", "004", "005"),
+       Current_Age = c(75, 38, 29, 45, 47),
+     Response_2015 = c("Yes", "No", "Yes", "Yes", "No"),
+     Response_2010 = c("No", "No", "Yes", NA, "Yes"),
+     Response_2007 = c("Yes", "No", "Yes", "No", NA),
+     Response_2005 = c("Yes", "Yes", NA, "No", "No")
+)
+sample_df
+```
+
+```{r}
+#| code-fold: true
+sample_df %>% 
+  pivot_longer(
+    cols = starts_with("Response"),
+    names_to = "Year",
+    names_pattern = "Response_(.+)",
+    names_transform = list(Year = as.integer),
+    values_to = "Response") %>%
+  group_by(ID) %>% 
+  mutate(Response_Age = Current_Age - (max(Year)-Year)) %>% 
+  arrange(desc(Year), ID)
+```
+
+
+
+
+
+
+
+# Combining data
+
+## Binding 
+
+```{r}
+A = select(slice(iris, 1:2), 1:2)
+A
+```
+
+```{r}
+B = select(slice(iris, 3:4), 2:3)
+B
+```
+
+```{r}
+bind_rows(A, B)
+```
+
+```{r}
+bind_cols(A, B)
+```
+
+
+## Joins
+
+Classic data base operations (e.g., inner/left/right/full outer-joins, union/intersect etc.) are also availabe:
+
+```{r}
+tmp <- tribble(~ Species, ~German_Name, ~Color,
+               "versicolor", "Sumpfschwertlilie", "diverse",
+               "setosa", "Borsten-Schwertlilie", "magenta")
+tmp
+
+inner_join(data, tmp) ## only 100 rows, since virginica is missing in tmp
+left_join(data, tmp) ## all rows, but cols are NA for virginica
+```
+
+
+
