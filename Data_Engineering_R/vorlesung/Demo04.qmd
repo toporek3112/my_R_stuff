@@ -1,0 +1,109 @@
+---
+title: "Data Engineering Demo 04"
+subtitle: "Some subtitle"
+date: today
+author: "Karol"
+format: 
+  html:
+    toc: true
+    toc-location: right
+    toc-title: "Yes"
+    code-link: true
+    code-tools: true
+    embed-resources: true
+    self-contained-math: true
+  pdf: 
+    toc: true
+    toc-title: "Inhaltsverzeichnis"
+    number-sections: true
+  revealjs: 
+    echo: fenced
+editor: source
+---
+
+### Overview
+
+* EDA vs. Public Quality Visualizations
+* Differet graphig systems in R
+
+## EDA vs. Public Quality Visualizations
+
+1. EDA (Explorative Data Analysiy) Graphs
+
+* Target: (Better) understand your data
+  
+  + I want to understand the data (no one else)
+  + Many graphs for quick understand of the data
+  + Many graphs are not important enought for a target audience
+
+* Interactive (not stored)
+* Maximally as appendix in a report (not into main section)
+* **Select moste interesting and reveling graphs** and make them **into high quality**
+* base R graphs (quick and check to produce)
+
+1. Telling Grapghs
+
+* Target: High Quality Visualisations for a Target Audience
+
+  + Reports
+  + Presentations
+  + Convince your emploer
+
+
+* Key insights communication (need high quality graphs)
+* Convince someone
+* self-expleinatory
++ ggplot2 graphs (highliy flexible, costly to generate)
+
+## Graphs in R for EDA
+
+Use generic dataset name
+```{r}
+ds <- iris
+
+```
+
+## Generate base R histograms (quickly)
+
+```{r}
+#| layout-ncol: 2
+# without names
+# ds[sapply(ds, is.numeric)] |> lapply(hist)
+
+# with names
+ds[sapply(ds, is.numeric)] |> 
+  names() |> 
+  lapply(function(v) hist(ds[,v], main = v, xlab=v))
+```
+
+
+
+
+## Generate lattice histograms (quickly)
+
+```{r}
+#| layout-ncol: 2
+library(lattice)
+
+# without names
+# ds[sapply(ds, is.numeric)] |> lapply(histogram)
+
+# with names
+ds[sapply(ds, is.numeric)] |> 
+  names() |> 
+  lapply(function(v) histogram(ds[,v], main = v, xlab=v))
+```
+
+
+## Generate base R counts (quickly)
+
+```{r}
+#| layout-ncol: 2
+# without names
+# ds[sapply(ds, is.numeric)] |> lapply(hist)
+
+# with names
+ds[sapply(ds, is.factor)] |> 
+  names() |> 
+  lapply(function(v) barchart(ds[,v], main = v, xlab=v))
+```

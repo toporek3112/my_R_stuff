@@ -266,7 +266,7 @@ Visualize the relationship of calories with fat. Additionally, highlight whether
 <!-- Use appropriate titles and legends. -->
 
 ```{r}
-p3 <- ggplot(UScereal, aes(x = calories, y = fat, color = vitamins)) +
+p3 <- ggplot(UScereal, aes(x = calories, y = fat, color = o)) +
   geom_point() +
   labs(
     title = "Relationship between Calories and Fat in Cereal Products",
