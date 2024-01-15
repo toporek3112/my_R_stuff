@@ -1,0 +1,42 @@
+---
+title: "Data Engineering Demo 05"
+subtitle: "Some subtitle"
+date: today
+author: "Karol"
+format: 
+  html:
+    toc: true
+    toc-location: right
+    toc-title: "Yes"
+    code-link: true
+    code-tools: true
+    embed-resources: true
+    self-contained-math: true
+  pdf: 
+    toc: true
+    toc-title: "Inhaltsverzeichnis"
+    number-sections: true
+  revealjs: 
+    echo: fenced
+editor: source
+---
+
+## Libraries
+
+```{r}
+library(tidyverse)
+```
+
+
+## Overview
+
+* Databases in R
+* Webharvesting
+* Citation in Visual mode
+
+## Resources on Databases
+
+* [Cran Task View: Databases](https://cran.r-project.org/web/views/Databases.html)
+* [db.rstudio](https://github.com/rstudio/db.rstudio.com)
+
+
