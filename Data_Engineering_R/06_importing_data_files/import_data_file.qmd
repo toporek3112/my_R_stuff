@@ -1,0 +1,232 @@
+---
+title: "R6: Import data files"
+subtitle: "Data import from files with `tidyverse`"
+author: "Andreas Reschreiter"
+output: 
+  pdf_document: 
+    number_sections: yes
+    toc: yes
+---
+
+
+```{r setup, include=FALSE}
+## set global chunk options
+knitr::opts_chunk$set(warning = F, message = F,
+                     # include = FALSE, ## F --> no code + no output
+                     # echo = FALSE,    ## F --> no code, only output
+                     # eval = FALSE,    ## F --> only code, no output 
+                      fig.align = "center",
+                      out.width = "75%")
+```
+
+
+# Import data from text files
+Import data from text files.
+
+## Required packages
+
+```{r, message=FALSE}
+library(tidyverse) ## includes packages: readr, magrittr, dplyr, stringr, tidyr, tibble
+```
+
+
+## Delimited data files
+The structure of the text file and data can be inspected with (ordinary) text editors.
+
+Delimited text (data) files use a column separator. Use `read_delim()` and specify the column separator in the `delim=` option. Wrappers exist for frequently used delimiters:  
+
+ - `read_delim()` sets the separator in `delim=` 
+ - `read_csv()` for comma
+ - `read_csv2()` for semi-colons
+ - `read_tsv()` for tabulator 
+ - `read_table()` for white space as separators
+
+## Inspect the text file
+- Visually inspection `data/text1.txt` with a text editor 
+- Can also read-in the first few lines in the file `data/text1.txt`
+```{r}
+read_lines("data/text1.txt", n_max = 5)
+```
+This reveals as separator a `","`, as decimal point a `"."` and the presence of column headings (in the first row).
+
+## Load data file
+
+```{r}
+x = read_delim("data/text1.txt", delim = ",")  
+ #x = read_csv("data/text1.txt")              
+x 
+```
+## Diagnose problems
+Use `problems(x)` to diagnose issues:
+
+```{r}
+problems(read_delim("data/text1.txt", delim = ","))   # NOTE Empty --> no problems
+```
+ 
+
+## Column type specification
+
+The functions attempt to guess the data types automatically. If this does not work, they can be specified manually. With "-" columns can be excluded.
+```{r}
+x = read_csv("data/text1.txt", col_types = "cdi-l") 
+x |> head()
+```
+
+Use `problems(x)` to diagnose issues:
+
+```{r}
+problems(x) |> head()     # NOTE not empty when problems
+```
+
+
+```{r}
+x = read_csv("data/text1.txt", col_types = "ccddc")
+x |> problems()
+```
+
+Character columns can be transformed with `mutate()`:
+```{r}
+x %>% head  # NOTE wiht magritr pipe can use head instead of head()
+x |> mutate(Sepal.Length = parse_double(Sepal.Length),
+             Sepal.Width = parse_double(Sepal.Width)) %>%  
+  head(2)
+```
+
+## Fixed-width data
+
+Visual inspection  of `data/text2.txt` (with a text editor) shows three text columns with fixed widths with spaces in the text and a varying number of spaces to separate the text columns. 
+
+Using the space separator `delim = " "` yields problems, because the text contains spaces the column are not quoted properly):
+```{r}
+x = read_delim("data/text2.txt", delim = " ", col_names = F)
+x %>%  problems
+x
+x = read_table("data/text2.txt", col_names = F)
+x %>%  problems
+x
+```
+
+Use `read.fwf()` for data with a fixed-width for each column. 
+```{r}
+data <- read_fwf("data/text2.txt", fwf_cols(Name = 12, Address = 37, Tel = 15))
+data <- read_fwf("data/text2.txt", fwf_cols(Name = 13, Address = 35, Tel = 15))
+data
+```
+The file `data/text2.txt` contains in the rows from character 1-12 the name and in character 13 a single space character. The length of the first column has to be at least 12 characters and at most 13 characters. The address in character 14-47 has a length of 34 characters is followed by a single space character and the telephone number from character 48-62.
+
+# Separating and joining columns
+
+Separate with `separate()` text in one column into different columns:
+```{r}
+data2 <- data %>% 
+  mutate(Address = str_replace(Address, ",", ";")) %>% 
+  separate(Address, c("Street", "ZIPCity"), sep = "; ") %>% 
+  separate(ZIPCity, c("ZIP", "City"), sep = " ")
+data2
+```
+
+Join with `unite()` text in different columns into one column:
+```{r}
+data2 %>% 
+  unite(ZIPCity, ZIP, City, sep = " ") %>% 
+  unite(Address, ZIPCity, Street, sep = ", ")
+```
+
+
+# Missing data
+
+Explicitly missing data is present in the data file with a special entry for a missing data point. Implicitly missing data is not present in the data file (absent data points).
+
+Inspect the file:
+```{r}
+read_lines("data/text3.txt")
+```
+
+The file `text3.txt` contains explicitly missing data via `??` entries:
+```{r}
+data1 <- read_table("data/text3.txt", col_names = TRUE, na = "??" )
+data <- read_fwf(file="data/text3.txt",
+                 na = "??",
+                 skip = 1, 
+                 col_positions = fwf_empty(file="data/text3.txt",
+                                           col_names = names(data1))
+                 ) 
+data
+```
+## Find  missing data (rows)
+```{r}
+data %>% filter(!complete.cases(.)) # find all rows with missings
+```
+## Drop missing data (rows)
+```{r}
+data %>% drop_na() ## either drop them ...
+```
+## Replace missing data points
+```{r}
+data %>% mutate(Survived = replace_na(Survived, 0)) ## ... or replace them
+```
+## Converting entries into missing values
+```{r}
+data <- data %>% 
+  mutate_all(na_if, "") 
+data
+```
+## Fill missing data points
+In `text3.txt` for the first two columns the entry in the previous row of the same column applies. The entries in the columns `Class` and `Sex` can be filled with the values from the previous row (`direction = "down"`):
+```{r}
+data <- data %>% 
+  fill(Class, Sex, .direction = "down")
+data
+```
+
+
+
+
+
+
+
+
+# Import from Excel
+
+## Required packages
+
+```{r, message=FALSE}
+library(tidyverse)
+library(readxl)
+```
+
+## Get sheet names
+First, get the sheet names:
+
+```{r}
+path = "data/EU_Stockmarkets.xlsx"
+sheets = excel_sheets(path)
+sheets
+```
+
+## Import sheets
+
+Try one sheet:
+
+```{r}
+read_excel(path, sheet = "1991")
+```
+
+Loop over all sheets:
+
+```{r}
+data = lapply(sheets, read_excel, path = path)
+names(data) = sheets
+```
+
+Combine subtables. Add sheet names as extra column. Fix name of index column.
+
+```{r}
+data = bind_rows(data, .id = "Year") %>% 
+  rename("Period" = "...1") %>% 
+  mutate(Period = parse_integer(Period),
+         Year = parse_integer(Year))
+data
+```
+
+

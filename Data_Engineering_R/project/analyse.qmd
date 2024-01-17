@@ -1,0 +1,166 @@
+---
+title: "Data Engineering Project with R"
+subtitle: "Dataset: [Drug consumtion (quantified)](https://archive.ics.uci.edu/dataset/373/drug+consumption+quantifiedc)"
+author: "Topór Karol"
+date: today
+embed-resources: true
+format:
+  html: 
+    output-file: frug-consumtion-quantified-topor-karol-dsm23004.html
+    #output-ext: "html.html" 
+    toc: true
+    toc-location: right
+    code-link: true
+    code-tools: true
+    #df-print: kable
+    theme:
+      light: flatly
+      dark: darkly
+    #echo: fenced
+  pdf: 
+    output-file: frug-consumtion-quantified-topor-karol-dsm23004.pdf 
+    toc: true
+    number-sections: true
+    code-link: true
+    df-print: tibble
+    crossref: 
+      lof-title: "List of Figures"
+fig-align: center
+execute: 
+  warning: false
+---
+
+```{=tex}
+\listoffigures 
+\listoftables
+\listoflistings
+```
+
+```{r}
+# load and transform dataset
+data_raw <- read_csv("./data/drug_consumption.data", col_names = FALSE)
+
+# Column names based on your description
+column_names <- c("ID", "Age", "Gender", "Education", "Country", "Ethnicity", 
+                  "Nscore", "Escore", "Oscore", "Ascore", "Cscore", 
+                  "Impulsiveness", "SS", "Alcohol", "Amphet", "Amyl", 
+                  "Benzos", "Caff", "Cannabis", "Choc", "Coke", "Crack", 
+                  "Ecstasy", "Heroin", "Ketamine", "Legalh", "LSD", 
+                  "Meth", "Mushrooms", "Nicotine", "Semer", "VSA")
+
+# age mapping
+age_mapping <- setNames(c("18-24", "25-34", "35-44", "45-54", "55-64", "65+"),
+                        c(-0.95197, -0.07854, 0.49788, 1.09449, 1.82213, 2.59171))
+# gender mapping
+gender_mapping <- setNames(c("Male", "Female"), c(-0.48246, 0.48246))
+# Education mapping
+education_mapping <- setNames(c("Left school before 16 years", "Left school at 16 years",
+                                "Left school at 17 years", "Left school at 18 years",
+                                "Some college or university, no certificate or degree",
+                                "Professional certificate/ diploma", "University degree",
+                                "Masters degree", "Doctorate degree"),
+                              c(-2.43591, -1.73790, -1.43719, -1.22751, -0.61113,
+                                -0.05921, 0.45468, 1.16365, 1.98437))
+# Country mapping
+country_mapping <- setNames(c("Australia", "Canada", "New Zealand", "Other",
+                              "Republic of Ireland", "UK", "USA"),
+                            c(-0.09765, 0.24923, -0.46841, -0.28519,
+                              0.21128, 0.96082, -0.57009))
+# Ethnicity mapping
+ethnicity_mapping <- setNames(c("Asian", "Black", "Mixed-Black/Asian",
+                                "Mixed-White/Asian", "Mixed-White/Black",
+                                "Other", "White"),
+                              c(-0.50212, -1.10702, 1.90725, 0.12600,
+                                -0.22166, 0.11440, -0.31685))
+# Drug consumtion classes maping
+drug_class_mapping <- setNames(c("Never Used", "Used over a Decade Ago", "Used in Last Decade",
+                                "Used in Last Year", "Used in Last Month", "Used in Last Week",
+                                "Used in Last Day"),
+                              c("CL0", "CL1", "CL2", "CL3", "CL4", "CL5", "CL6"))
+
+data_raw <- setNames(data_raw, column_names)
+
+data <- data_raw %>%
+mutate(
+  Age = factor(Age, levels = names(age_mapping), labels = age_mapping),
+  Gender = factor(Gender, levels = names(gender_mapping), labels = gender_mapping),
+  Education = factor(Education, levels = names(education_mapping), labels = education_mapping),
+  Country = factor(Country, levels = names(country_mapping), labels = country_mapping),
+  Ethnicity = factor(Ethnicity, levels = names(ethnicity_mapping), labels = ethnicity_mapping),
+  Alcohol = factor(Alcohol, levels = names(drug_class_mapping), labels = drug_class_mapping),
+  Amphet = factor(Amphet, levels = names(drug_class_mapping), labels = drug_class_mapping),
+  Amyl = factor(Amyl, levels = names(drug_class_mapping), labels = drug_class_mapping),
+  Benzos = factor(Benzos, levels = names(drug_class_mapping), labels = drug_class_mapping),
+  Caff = factor(Caff, levels = names(drug_class_mapping), labels = drug_class_mapping),
+  Cannabis = factor(Cannabis, levels = names(drug_class_mapping), labels = drug_class_mapping),
+  Choc = factor(Choc, levels = names(drug_class_mapping), labels = drug_class_mapping),
+  Coke = factor(Coke, levels = names(drug_class_mapping), labels = drug_class_mapping),
+  Crack = factor(Crack, levels = names(drug_class_mapping), labels = drug_class_mapping),
+  Ecstasy = factor(Ecstasy, levels = names(drug_class_mapping), labels = drug_class_mapping),
+  Heroin = factor(Heroin, levels = names(drug_class_mapping), labels = drug_class_mapping),
+  Ketamine = factor(Ketamine, levels = names(drug_class_mapping), labels = drug_class_mapping),
+  Legalh = factor(Legalh, levels = names(drug_class_mapping), labels = drug_class_mapping),
+  LSD = factor(LSD, levels = names(drug_class_mapping), labels = drug_class_mapping),
+  Meth = factor(Meth, levels = names(drug_class_mapping), labels = drug_class_mapping),
+  Mushrooms = factor(Mushrooms, levels = names(drug_class_mapping), labels = drug_class_mapping),
+  Nicotine = factor(Nicotine, levels = names(drug_class_mapping), labels = drug_class_mapping),
+  Semer = factor(Semer, levels = names(drug_class_mapping), labels = drug_class_mapping),
+  VSA = factor(VSA, levels = names(drug_class_mapping), labels = drug_class_mapping)
+) %>%
+as_tibble()
+```
+
+```{r}
+ggplot(data, aes(y=Impulsiveness, x=as.factor(Gender))) + geom_boxplot(stat="boxplot", position="dodge", alpha=0.5, width=0.2) + theme_grey() + theme(text=element_text(family="sans", face="plain", color="#000000", size=15, hjust=0.5, vjust=0.5)) + xlab("as.factor(Gender)") + ylab("Impulsiveness")
+
+```
+
+Nur zwischen 55-64 sind frauen impulsiver als Männer? XD
+```{r}
+ggplot(data, aes(y=Impulsiveness, x=as.factor(Age))) + geom_boxplot(aes(fill=as.factor(Gender)), stat="boxplot", position="dodge", alpha=0.5, width=0.2) + theme_grey() + theme(text=element_text(family="sans", face="plain", color="#000000", size=15, hjust=0.5, vjust=0.5)) + guides(fill=guide_legend(title="Gender")) + xlab("as.factor(Age)") + ylab("Impulsiveness")
+```
+
+
+Männer werden mit dem Alter weniger sensations suchend
+```{r}
+ggplot(data, aes(y=SS, x=as.factor(Age))) + geom_boxplot(aes(fill=as.factor(Gender)), stat="boxplot", position="dodge", alpha=0.5, width=0.2) + theme_grey() + theme(text=element_text(family="sans", face="plain", color="#000000", size=15, hjust=0.5, vjust=0.5)) + guides(fill=guide_legend(title="Gender")) + xlab("as.factor(Age)") + ylab("SS")
+```
+
+Personen mit niedrigen werten in inpulsive and senstion seeking nächmen öffters ecstasy
+```{r}
+ggplot(data, aes(y=Impulsiveness, x=SS)) + geom_point(aes(size=Impulsiveness, colour=Gender), stat="identity", position="jitter", alpha=0.4) + geom_smooth(aes(colour=Gender), stat="smooth", position="identity", method="auto", se=TRUE, n=80, level=0.95, span=0.75) + facet_grid(Ecstasy ~ .) + theme_grey() + theme(text=element_text(family="sans", face="plain", color="#000000", size=15, hjust=0.5, vjust=0.5)) + xlab("SS") + ylab("Impulsiveness")
+```
+
+# Note: We have stratifications by country, ethnicity which I will not analize because the data seems unievenly distributed amonge these. 
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+
+
+

@@ -29,7 +29,7 @@ editor: source
 ## Libraries
 
 ```{r}
-library(esquissse)
+library(esquisse)
 library(ggraptR)
 ```
 ```{r}

@@ -1,0 +1,321 @@
+---
+title: "Data Engineering Project with R"
+subtitle: "Dataset: [Drug consumtion (quantified)](https://archive.ics.uci.edu/dataset/373/drug+consumption+quantifiedc)"
+author: "Topór Karol"
+date: today
+embed-resources: true
+format:
+  html: 
+    output-file: frug-consumtion-quantified-topor-karol-dsm23004.html
+    #output-ext: "html.html" 
+    toc: true
+    toc-location: right
+    code-link: true
+    code-tools: true
+    #df-print: kable
+    theme:
+      light: flatly
+      dark: darkly
+    #echo: fenced
+  pdf: 
+    output-file: frug-consumtion-quantified-topor-karol-dsm23004.pdf 
+    toc: true
+    number-sections: true
+    code-link: true
+    df-print: tibble
+    crossref: 
+      lof-title: "List of Figures"
+fig-align: center
+execute: 
+  warning: false
+---
+
+```{=tex}
+\listoffigures 
+\listoftables
+\listoflistings
+```
+
+
+::: callout-caution
+### Instructions
+* Use this template for your project report. 
+* In the YAML field `author:` insert your name.
+* In the YAML field `subtitle:` insert the name of your dataset a hyper-linked it to your data source.
+* In the YAML fields `output:` for HTML and PDF insert the correct name for the output files (`name-of-dataset`_`your-surname`_`your-first-name`) including correct extensions `.html` `.pdf`. 
+* Do not remove import YAML setting like: `embed-resources: true`
+* Remove all `callout-caution ### Instructions` Instructions before submission from your final report.
+* Render your report into HTML and PDF format.
+* Submit in Moodle the following three files:
+  1. Rendered HTML report
+  2. Rendered PDF report
+  3. dataset file
+
+:::
+
+::: callout-caution
+### Instructions
+Your report must be of high quality, meaning that your report: 
+
+* is visually and textually pleasing of 
+* does not look/read/feel like a draft instead of a finished analysis
++ explains/discusses your findings and results in the main text, e.g., explain/discuss all figures/table in the main text 
+* is representable such that it can show to any interested third party
+* uses figure/table captions/linking/reference (see example further down)
+* Do not show any standard printout of R-code, use for data.frame/tibbles `knitr::kable()` printing. 
+* Do not simply print datasets (too many lines) use instead `rmarkdown::paged_table()`
+:::
+
+
+{{< pagebreak >}}
+
+# Introduction
+
+::: callout-caution
+### Instructions
+Write some text that introduces the reader to your report. Give a brief overview of what is shown in the sections of your report, like the data handling, descriptive statistics, data visualisations, etc.  
+
+:::
+
+
+## Libraries
+
+```{r}
+#| code-summary: Libraries
+#| code-fold: true
+library <- function(...) {suppressPackageStartupMessages(base::library(...))}
+library(tidyverse)
+```
+
+
+```{r}
+# load and transform dataset
+data_raw <- read_csv("./data/diabetic_data.csv", col_names = FALSE)
+
+
+```
+
+
+```{r}
+#esquisse::esquisser(data=data)
+#ggraptR::ggraptR(data)
+glimpse(data_raw)
+```
+
+
+
+
+# Data 
+
+## Data source
+::: callout-caution
+### Instructions
+Show your data source and provide appropriate links to your data including data descriptive files if available. 
+:::
+
+## Data import
+
+::: callout-caution
+### Instructions
+Download and import your dataset. Assign each variable appropriate/correct data types. Discuss/explain your choice for each variable (groups) in the main text.
+:::
+
+## Data dictionary
+
+::: callout-caution
+### Instructions
+Make a data dictionary (table) that describes all variables in the dataset (shows what they mean/measure).
+:::
+
+
+
+# Summary statistic tables
+
+::: callout-caution
+### Instructions
+Make summary statistics of your data.
+
+::: {.panel-tabset}
+
+## Numeric iris
+
+@tbl-summary-num-tidyverse-iris shows for the numerical variables in the iris dataset some summary statistics.
+
+```{r}
+#| label: "tbl-summary-num-tidyverse-iris"
+#| tbl-cap: "Summary statistics of numerical variables in `datasets::iris` with tidyverse (ungrouped)"
+#| code-fold: true
+iris |> 
+  janitor::clean_names() |>
+  mutate(row = row_number() |> factor()) |> 
+  pivot_longer(cols = where(is.numeric)) |> 
+  group_by(name) |> 
+  summarize(N = n(),
+            min = min(value),
+            mean = mean(value),
+            median = median(value),
+            max = max(value),
+            st.dev = sd(value)
+            ) |> 
+  knitr::kable(digits = 2)
+```
+
+
+
+## Numeric iris grouped
+
+@tbl-summary-num-tidyverse-iris-Species shows for the numerical variables in the iris dataset grouped summary statistics for different Species.
+
+```{r}
+#| label: "tbl-summary-num-tidyverse-iris-Species"
+#| tbl-cap: "Summary statistics of numerical variables in `datasets::iris` with tidyverse grouped by Species"
+#| code-fold: true
+iris |> 
+  janitor::clean_names() |>
+  mutate(row = row_number() |> as.character()) |> 
+  pivot_longer(cols = where(is.numeric)) |> 
+  group_by(name, species) |> 
+  summarize(N = n(),
+            min = min(value),
+            mean = mean(value),
+            median = median(value),
+            max = max(value),
+            st.dev = sd(value)
+            ) |> 
+  knitr::kable(digits = 2)
+```
+
+## Nominal iris
+
+@tbl-summary-fct-tidyverse-iris shows summary statistics for the iris factor variables.
+
+```{r}
+#| label: "tbl-summary-fct-tidyverse-iris"
+#| tbl-cap: "Summary statistics of factor variables in `datasets::iris` with tidyverse."
+#| code-fold: true
+
+iris |> 
+  janitor::clean_names() |>
+  mutate(row = row_number() |> as.character()) |> 
+  select(where(is.factor)) |> 
+  pivot_longer(cols = where(is.factor)) |> 
+  group_by(name) |> 
+  count(value) |> 
+  ungroup() |> 
+  arrange(desc(name), n) |> 
+  knitr::kable(digits = 2)
+```
+
+## Nominal penguins
+
+@tbl-summary-fct-tidyverse-penguins shows summary statistics for the iris factor variables.s and penguins factor variables.
+
+```{r}
+#| label: "tbl-summary-fct-tidyverse-penguins"
+#| tbl-cap: "Summary statistics of factor variables in `palmerpenguins::penguins` with tidyverse."
+#| code-fold: true
+
+data("penguins", package="palmerpenguins")
+penguins |> 
+  janitor::clean_names() |>
+  mutate(row = row_number() |> as.character()) |> 
+  select(where(is.factor)) |> 
+  pivot_longer(cols = where(is.factor)) |> 
+  group_by(name) |> 
+  count(value) |> 
+  ungroup() |> 
+  arrange(desc(name), n) |> #dput()
+  knitr::kable(digits = 2)
+```
+
+## All variable statistics
+
+@tbl-Base-R-All-Variables shows summary statistics applicable to different data type.
+
+```{r}
+#| code-fold: true
+#| code-summary: Load and specify dataset
+# specify full dataset
+data_all <- iris
+data_all <- palmerpenguins::penguins
+
+## numerical data
+data_num <- data_all[sapply(data_all, is.numeric)]
+data_num <- subset(data_all, select = sapply(data_all,is.numeric))
+data_num <- data_all |> select(where(is.numeric))
+
+## nominal data
+data_nom <- data_all[!sapply(data_all, is.numeric)]
+data_chr <- data_all[sapply(data_all, is.character)]
+data_lgl <- data_all[sapply(data_all, is.logical)]
+data_fct <- data_all[sapply(data_all, is.factor)]
+```
+
+
+```{r}
+#| label: tbl-Base-R-All-Variables
+#| tbl-cap: "Base R statistics applicable to all variables"
+#| code-fold: true
+data.frame(
+  #var = names(data_all),
+  n_obs = sapply(data_all, function(.) length(na.omit(.)))
+  ,n_all = sapply(na.omit(data_all), length)
+  ,n_missing = sapply(data_all, function(.) sum(is.na(.)))
+  ,mode = data_all |> sapply(mode)
+  ,class = data_all |> sapply(class)
+) |> #as_tibble() |> 
+  knitr::kable()
+```
+
+
+## Numerical data
+
+```{r}
+#| code-fold: true
+library(tidyverse)
+## n_obs individual by variables
+## n_all all variables have same n observations
+
+library(tidyverse)
+data.frame(
+  var = names(data_num),
+  n_obs = sapply(data_num, function(.) length(na.omit(.)))
+  ,n_all = sapply(na.omit(data_num), length)
+  ,min = sapply(data_num, function(.) min(na.omit(.)))
+  ,min_all = sapply(na.omit(data_num), min)
+  ,mean = sapply(data_num, function(.) mean(na.omit(.)))
+  ,mean_all = sapply(na.omit(data_num), mean)
+  ,median = sapply(data_num, function(.) median(na.omit(.)))
+  ,median_all = sapply(na.omit(data_num), median)
+  ,max = sapply(data_num, function(.) max(na.omit(.)))
+  ,max_all = sapply(na.omit(data_num), max)
+  ,sd = sapply(data_num, function(.) sd(na.omit(.)))
+  ,sd_all = sapply(na.omit(data_num), sd)
+) |> 
+  as_tibble() |> 
+  select(!contains("_all")) |> 
+  knitr::kable(digits = 2)
+```
+
+
+## print
+```{r}
+rmarkdown::paged_table(iris)
+```
+:::
+:::
+
+# Data visualisations
+
+::: callout-caution
+### Instructions
+Visually explore your data. 
+:::
+
+# Summary
+
+::: callout-caution
+### Instructions
+Summarise your finding. 
+:::
+

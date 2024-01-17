@@ -1,0 +1,154 @@
+---
+title: "R6 Exercises: Import data"
+subtitle: "Topor Karol"
+output:
+  pdf_document: 
+    number_sections: yes
+    toc: yes
+params:
+  printcode: TRUE
+  printoutput: TRUE
+urlcolor: blue
+---
+
+```{r setup, include=FALSE}
+## set global chunk options
+knitr::opts_chunk$set(
+  warning = FALSE,
+  message = FALSE,
+  echo = params$printcode,
+  eval = params$printoutput,
+  fig.align = "center",
+  out.width = "75%"
+)
+```
+
+---
+
+Packages used in this notebook:
+
+```{r}
+library(tidyverse)
+```
+
+---
+
+
+# Import text files
+
+Try to read in the four text files `data1.txt`, `data2.txt`, `data3.txt` and `data4.txt` in `data.zip` using `read_delim()`. Comment on (solvable/unsolvable) problems during reading in the data.
+
+## `data1.txt` (3P)
+
+Why is it not possible to read in `data1.txt` correctly?
+```{r}
+data1 <- read_delim("data/data1.txt", delim = ",")
+head(data1$Make)
+```
+Because the rows contain more values then there are columns. Thats why the last column 'Make' has a string with multiple values seperated by a ','
+
+
+## `data2.txt` (3P)
+```{r}
+data2 <- read_delim("data/data2.txt", delim = ";")
+head(data2)
+```
+
+
+## `data3.txt` (3P)
+
+```{r}
+data3 <- read_fwf("data/data3.txt", fwf_cols(
+                                      Manufacturer = 15, 
+                                      Model = 15, 
+                                      Type = 8,  
+                                      Min_Price = 10, 
+                                      Price = 6, 
+                                      Max_Price = 10,
+                                      MPG_city = 9,
+                                      MPG_highway = 12,
+                                      AirBags = 19,
+                                      DriveTrain = 11
+                                    )
+                  )
+head(data3)
+```
+
+
+## `data4.txt` (3P)
+
+```{r}
+data4_01 <- read_delim("data/data4.txt", delim = " ")
+head(data4_01)
+```
+
+
+Using `read.table()` command instead of `read_delim()`:
+
+```{r}
+data4_02 <- read_table("data/data4.txt") %>%
+         setNames(str_replace_all(names(.), "\"", "")) %>%
+         mutate(across(everything(), ~str_replace_all(., "\"", "")))
+head(data4_02)
+```
+
+
+# Separating and joining columns (6P)
+
+Using the data below, transform the birth date into the format \texttt{YYYY-MM-DD}. Try to pad days and months with a leading 0, so that, e.g., \texttt{1.1.1988} becomes \texttt{1988-01-01}. (Hint: use \texttt{mutate()} with \texttt{str\_pad()}).
+
+```{r include=TRUE, echo=T}
+tmp <- tribble(~Name, ~Birthdate,
+        "Susan", "29.10.1966",
+        "Will", "1.1.1988",
+        "Chris", "10.10.1977") 
+```
+
+```{r}
+tmp <- tmp %>%
+      mutate(
+        Day = str_pad(str_extract(Birthdate, "^\\d+"), 2, pad = "0"),
+        Month = str_pad(str_extract(Birthdate, "(?<=\\.)\\d+(?=\\.)"), 2, pad = "0"),
+        Year = str_extract(Birthdate, "\\d+$"),
+        Birthdate_formated = paste(Year, Month, Day, sep = "-")
+      ) %>%
+      select(-c(Day, Month, Year))
+
+tmp
+```
+
+
+# Missing data (7P)
+
+Using the data below, find all rows with missing data, impute missing invitations with 0, missing ages with the average age and remove all rows with other missing data.
+```{r include=TRUE, echo=T}
+tmp <- tribble(~Name, ~Age, ~Invitations, ~Phone,
+        "Tim", 20, 0, "123 345",
+        "Mary", 30, 12, "321 999",
+        "Chris", 25, NA, "444 324",
+        "Lilly", NA, 0, "453 424",
+        "Will", 20, 0, NA
+)
+```
+
+All rows with missing data:
+```{r}
+tmp %>% filter(if_any(everything(), is.na))
+```
+
+Impute missing invitations with 0 values:
+```{r}
+tmp <- tmp %>% mutate(Invitations = replace_na(Invitations, 0))
+tmp
+```
+
+Impute missing ages with the average age:
+```{r}
+tmp <- tmp %>% mutate(Age = ifelse(is.na(Age), mean(Age, na.rm = TRUE), Age))
+tmp
+```
+Remove all rows with other missing data:
+```{r}
+tmp <- drop_na(tmp)
+tmp
+```

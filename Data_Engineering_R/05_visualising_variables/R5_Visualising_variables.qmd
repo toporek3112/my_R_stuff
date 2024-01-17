@@ -1,0 +1,230 @@
+---
+title: "R5: Visualising variables"
+subtitle: "Data visualisation with `ggplot2` in `tidyverse`"
+author: "Andreas Reschreiter"
+output: 
+  pdf_document: 
+    number_section: yes
+    toc: yes
+  html: 
+    toc: true
+    toc-location: right
+    code-link: true
+    code-tools: true
+    df-print: paged
+---
+
+```{r setup, include=FALSE}
+## set global chunk options
+knitr::opts_chunk$set(warning = FALSE, message = FALSE,
+                      out.width = "70%",
+                      fig.align = "center")
+```
+
+---
+
+Packages and data used in this notebook:
+```{r}
+library(tidyverse) # tidyverse includes the library(ggplot2) 
+cars <- as_tibble(mtcars, rownames = "names") %>% 
+  mutate(am = ifelse(am == 1, "manual", "automatic"),
+                     vs = ifelse(vs == 1, "straight", "v-shaped"))
+```
+
+---
+
+# One categorical variable
+
+## Classic bar chart
+
+```{r}
+ggplot(cars, aes(x = am, fill = am)) + geom_bar()
+```
+
+Note: geom_bar() implicitely computes the counts and maps them to y!
+
+## Stacked bar chart
+
+```{r}
+ggplot(cars, aes(x = "x", fill = am)) + 
+  geom_bar(position = "fill", width = 0.5) +
+  ylab("proportion") + xlab("") + 
+    scale_x_discrete(breaks = NULL)
+```
+
+## Pie chart (deprecated)
+
+```{r}
+ggplot(cars, aes(x = 1, fill = am)) + 
+  geom_bar(position = "fill") +
+  ylab("proportion") + coord_polar("y") +
+  xlab("") + scale_x_continuous(breaks = NULL) + 
+  ggtitle("Proportion of automatic and manual transmission")
+```
+
+# Two categorical variables
+
+## Stacked bar charts
+
+```{r}
+ggplot(cars, aes(x = am, fill = vs)) + geom_bar()
+```
+
+## Stacked bar charts with proportions
+
+```{r}
+ggplot(cars, aes(x = am, fill = vs)) + geom_bar(position = "fill") + 
+    ylab("") + 
+    scale_fill_brewer(type = "qual", palette = 7)
+```
+
+## Grouped bar chart
+
+```{r}
+ggplot(cars, aes(x = am, fill = vs)) + 
+    geom_bar(position = "dodge")
+```
+
+## Grouped bar chart with proportions (better use stacked bar chart instead!)
+
+```{r}
+ggplot(cars, aes(x = am, y = stat(prop), fill = vs, group = vs)) + 
+    geom_bar(position = "dodge")
+```
+
+# One continous variable
+
+## Histogram (with density plot):
+
+```{r}
+ggplot(cars, aes(x = mpg, y = stat(density))) + ## uses density instead of counts
+#  geom_histogram(binwidth = 5) +
+#  geom_histogram(aes(fill = stat(x)), binwidth = 5) +
+  geom_histogram(aes(fill = stat(density)), binwidth = 5) +
+  scale_fill_distiller(type = "seq", direction = 1) +
+  
+  geom_density(col = "brown", size = 1)
+```
+
+## Boxplot:
+
+```{r}
+ggplot(cars, aes(1, mpg)) + ## x mapped to 1 since there are no groups
+  geom_boxplot() + 
+  coord_flip() + 
+    ## remove labels and ticks on the x scale
+    xlab("") + scale_x_continuous(breaks = NULL)
+```
+
+# Two continuous variables
+
+## Standard scatter plot with regression line:
+
+```{r}
+lm(hp ~ qsec, data = cars)
+ggplot(cars, aes(hp, qsec)) + geom_point() + 
+  geom_smooth(method = "lm") +
+  annotate("label", 200, 20, label = "qsec = 631.7 - 27.17 hp")
+```
+
+## Scatter plot Using text labels:
+
+```{r}
+ggplot(cars, aes(hp, qsec)) + 
+  geom_text(aes(label = names)) + 
+  geom_smooth(method = "lm")
+```
+
+Better solution using `ggrepel` package:
+
+```{r}
+library("ggrepel")
+ggplot(cars, aes(hp, qsec)) + 
+  geom_point() +
+  geom_text_repel(aes(label = names)) + 
+  geom_smooth(method = "lm")
+```
+
+# One continuous, one discrete
+
+## Parallel boxplots:
+
+```{r}
+ggplot(cars, aes(factor(cyl), hp)) + geom_boxplot() + xlab("cylinder")
+```
+
+```{r}
+ggplot(cars, aes(factor(cyl), hp)) + geom_violin() + xlab("cylinder")
+```
+
+## Facetted density plots:
+
+```{r}
+ggplot(cars, aes(x = hp)) + 
+    geom_density() + 
+    facet_wrap(~ cyl)
+```
+
+# Special Topics
+
+## Spine plots / Mosaic plots
+
+### Cars data
+
+A spine plot is a special case of a mosaic plot:
+
+```{r}
+library("ggmosaic")
+ggplot(cars) + geom_mosaic(aes(product(vs), fill = am)) +
+  xlab("Engine") + ylab("Transmission") # + scale_y_continuous()
+```
+
+Mosaic plots can handle more than two variables:
+
+```{r}
+cars |> 
+  mutate(gear = as.character(gear)) |> 
+  mutate(cyl = as.character(cyl)) |> 
+  ggplot() + 
+  geom_mosaic(aes(product(gear, am, vs), 
+                  fill = cyl)) 
+```
+
+### Titanic Data
+
+```{r}
+data(titanic)
+```
+
+Plot for Survival and Sex
+```{r}
+ggplot(data = titanic) +
+geom_mosaic(aes(x = product(Survived, Sex), fill = Survived))
+```
+
+Plot for Survival and Class
+```{r}
+ggplot(data = titanic) +
+geom_mosaic(aes(x = product(Survived, Class), fill = Survived))
+```
+
+Plot for Survival, Sex and Class
+```{r}
+ggplot(data = titanic) +
+geom_mosaic(aes(x = product(Survived, Sex, Class), fill = Survived))
+```
+
+
+## Time series
+
+```{r}
+library(zoo)
+as_tibble(Seatbelts) %>% 
+  mutate(date = as.Date(Seatbelts)) %>% 
+  gather(key = "Position", value = "Deaths", front, rear) %>% 
+  
+ggplot(aes(date, Deaths, col = Position)) + 
+  geom_line() +
+  scale_x_date(breaks = "3 years") +
+  geom_vline(xintercept = as.Date("1983-01-01"), col = "blue")
+```
